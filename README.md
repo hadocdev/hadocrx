@@ -1,19 +1,14 @@
 # README
 
-## About
+## About  
 
-This is the official Wails Vanilla template.
+**HadocRx** is a cross-platform digital prescription management software designed to modernize the process of creating, managing, and sharing medical prescriptions. Built for **Windows** and **Linux**, HadocRx offers a secure and efficient way to handle prescriptions, helping healthcare professionals focus more on patient care and less on paperwork.  
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+### Why Choose HadocRx?  
+- **Efficiency**: Streamline prescription workflows, saving valuable time.  
+- **Accuracy**: Reduce errors with structured digital prescription formats.  
+- **Accessibility**: Securely store and retrieve prescriptions with ease.  
+- **Sustainability**: Promote eco-friendly practices by minimizing paper use.  
 
-## Live Development
+HadocRx is focused on desktop environments and does not currently support mobile devices, ensuring an optimized experience tailored to practitioners and administrators.  
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
-
-## Building
-
-To build a redistributable, production mode package, use `wails build`.
