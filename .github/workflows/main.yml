@@ -17,9 +17,13 @@ jobs:
       - name: Build apk
         run: flutter build apk --release --split-per-abi
       - name: Compress artifacts
-        run: tar czvf build.tar.gz --transform='s,^,build/,' build/app/outputs/flutter-apk build/ios/iphoneos
+        run: |
+          mkdir artifacts
+          cp -r build/app/outputs/flutter-apk artifacts/
+          cp -r build/ios/iphoneos artifacts/
+          tar czvf artifacts.tar.gz artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build
-          path: build.tar.gz
+          name: artifacts
+          path: artifacts.tar.gz
