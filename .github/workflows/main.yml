@@ -29,15 +29,16 @@ jobs:
           cat > AppDir/AppRun <<EOF
           #! /bin/sh
           set -e
-          this_dir=\"\$(readlink -f \"\$(dirname \"\$0\")\")\"
-          export LD_LIBRARY_PATH=\"\$this_dir/lib:\$LD_LIBRARY_PATH\"
-          export PATH=\"\$this_dir/bin:\$PATH\"
-          echo exec \"\$this_dir/bin/$BINARY_PATH\" "\$@"
+          this_dir="\$(readlink -f \"\$(dirname \"\$0\")\")"
+          export LD_LIBRARY_PATH="\$this_dir/lib:\$LD_LIBRARY_PATH"
+          export PATH="\$this_dir/bin:\$PATH"
+          echo exec "\$this_dir/bin/$BINARY_PATH" "\$@"
           EOF
+          chmod +x AppDir/AppRun
           cp web/icons/Icon-512.png AppDir/icon.png
           cat > AppDir/"$BINARY_NAME.desktop" <<EOF
           [Desktop Entry]
-          Name=Hadoc Rx
+          Name=$BINARY_NAME
           Exec=$BINARY_NAME
           Type=Application
           Categories=Office
@@ -45,14 +46,14 @@ jobs:
           EOF
           wget "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x ./appimagetool-x86_64.AppImage
-          ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir/
+          ARCH=x86_64 
+          ./appimagetool-x86_64.AppImage AppDir/
+          mkdir -p artifacts/build/linux
+          cp \""$BINARY_NAME"-"$ARCH".AppImage\" artifacts/build/linux/
       - name: Build apk
-        run: flutter build apk --release --split-per-abi
-      - name: Package artifacts
         run: |
-          mkdir -p artifacts artifacts/linux
+          flutter build apk --release --split-per-abi
           cp -r build/app/outputs/flutter-apk artifacts/
-          cp *.AppImage artifacts/linux/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
