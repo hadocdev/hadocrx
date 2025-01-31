@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Build ipa
-        run: flutter build ipa --release --no-codesign
+        run: flutter build ipa --release
       - name: Build apk
         run: flutter build apk --release --split-per-abi
       - name: Compress artifacts
