@@ -21,27 +21,36 @@ jobs:
       - name: Create AppDir
         run: |
           mkdir -p AppDir/bin AppDir/lib
-          find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs ldd | grep "=>" | grep -v "not found" | grep -oP '(?<= => )[^ ]+' | xargs -I{} cp {} AppDir/lib/
-          find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} cp {} AppDir/bin/
+          ldd "$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable)" | grep "=>" | grep -v "not found" | grep -oP '(?<= => )[^ ]+' | xargs -I{} cp {} AppDir/lib/
+          cp "$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable)" AppDir/bin/
           cp -r build/linux/x64/release/bundle/data AppDir/bin/
           cat > AppDir/AppRun <<EOF
           #! /bin/sh
-
           set -e
-          this_dir="\$(readlink -f \"\$(dirname \"\$0\")\")"
-          export LD_LIBRARY_PATH="\$this_dir/lib:\$LD_LIBRARY_PATH"
-          export PATH="\$this_dir/bin:\$PATH"
-          exec "\$this_dir/bin/hadocrx" "\$@"
+          this_dir=\"\$(readlink -f \"\$(dirname \"\$0\")\")\"
+          export LD_LIBRARY_PATH=\"\$this_dir/lib:\$LD_LIBRARY_PATH\"
+          export PATH=\"\$this_dir/bin:\$PATH\"
+          echo exec \"\$this_dir/bin/"$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} basename {})"\" "\$@"
           EOF
-          cat AppDir/AppRun
+          cp web/icons/Icon-512.png AppDir/icon.png
+          cat > AppDir/AppRun/"$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} basename {})".desktop <<EOF
+          [Desktop Entry]
+          Name=Hadoc Rx
+          Exec="$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} basename {})"
+          Type=Application
+          Categories=Office
+          Icon=icon
+          EOF
+          wget "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x ./appimagetool-x86_64.AppImage
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir/
       - name: Build apk
         run: flutter build apk --release --split-per-abi
       - name: Package artifacts
         run: |
-          mkdir artifacts
+          mkdir -p artifacts artifacts/linux
           cp -r build/app/outputs/flutter-apk artifacts/
-          cp -r build/linux/x64/release/bundle artifacts/
-          mv artifacts/bundle artifacts/linux
+          cp *.AppImage artifacts/linux/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
