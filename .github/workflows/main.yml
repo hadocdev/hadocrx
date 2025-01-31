@@ -2,7 +2,7 @@ on: workflow_dispatch
 
 jobs:
   main:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -12,15 +12,20 @@ jobs:
           channel: stable
       - name: Install dependencies
         run: flutter pub get
-      - name: Build ipa
-        run: flutter build ipa --release
+      - name: Setup linux environment
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+      - name: Build linux app
+        run: flutter build linux
       - name: Build apk
         run: flutter build apk --release --split-per-abi
       - name: Compress artifacts
         run: |
           mkdir artifacts
           cp -r build/app/outputs/flutter-apk artifacts/
-          cp -r build/ios/iphoneos artifacts/
+          cp -r build/linux/x64/release/bundle artifacts/
+          mv artifacts/bundle artifacts/linux
           tar czvf artifacts.tar.gz artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
