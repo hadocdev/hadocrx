@@ -38,7 +38,7 @@ jobs:
           cat > AppDir/"$BINARY_NAME.desktop" <<EOF
           [Desktop Entry]
           Name=Hadoc Rx
-          Exec=$BINARY_NAME"
+          Exec=$BINARY_NAME
           Type=Application
           Categories=Office
           Icon=icon
