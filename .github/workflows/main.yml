@@ -21,8 +21,10 @@ jobs:
       - name: Create AppDir
         run: |
           mkdir -p AppDir/bin AppDir/lib
-          ldd "$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable)" | grep "=>" | grep -v "not found" | grep -oP '(?<= => )[^ ]+' | xargs -I{} cp {} AppDir/lib/
-          cp "$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable)" AppDir/bin/
+          BINARY_PATH="$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable)"
+          BINARY_NAME="$(basename $BINARY_PATH)"
+          ldd $BINARY_PATH | grep "=>" | grep -v "not found" | grep -oP '(?<= => )[^ ]+' | xargs -I{} cp {} AppDir/lib/
+          cp $BINARY_PATH AppDir/bin/
           cp -r build/linux/x64/release/bundle/data AppDir/bin/
           cat > AppDir/AppRun <<EOF
           #! /bin/sh
@@ -30,13 +32,13 @@ jobs:
           this_dir=\"\$(readlink -f \"\$(dirname \"\$0\")\")\"
           export LD_LIBRARY_PATH=\"\$this_dir/lib:\$LD_LIBRARY_PATH\"
           export PATH=\"\$this_dir/bin:\$PATH\"
-          echo exec \"\$this_dir/bin/"$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} basename {})"\" "\$@"
+          echo exec \"\$this_dir/bin/$BINARY_PATH\" "\$@"
           EOF
           cp web/icons/Icon-512.png AppDir/icon.png
-          cat > AppDir/AppRun/"$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} basename {})".desktop <<EOF
+          cat > AppDir/"$BINARY_NAME.desktop" <<EOF
           [Desktop Entry]
           Name=Hadoc Rx
-          Exec="$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable | xargs -I{} basename {})"
+          Exec=$BINARY_NAME"
           Type=Application
           Categories=Office
           Icon=icon
