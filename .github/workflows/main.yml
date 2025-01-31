@@ -29,15 +29,16 @@ jobs:
           BINARY_PATH="$(find build/linux/x64/release/bundle -maxdepth 1 -type f -executable)"
           BINARY_NAME="$(basename $BINARY_PATH)"
           ldd $BINARY_PATH | grep "=>" | grep -v "not found" | grep -oP '(?<= => )[^ ]+' | xargs -I{} cp {} AppDir/lib/
+          cp /lib64/ld-linux-x86-64.so.2 AppDir/lib/
           cp $BINARY_PATH AppDir/bin/
           cp -r build/linux/x64/release/bundle/data AppDir/bin/
           cat > AppDir/AppRun <<EOF
           #! /bin/sh
           set -e
-          this_dir="\$(readlink -f \"\$(dirname \"\$0\")\")"
+          this_dir="\$(readlink -f "\$(dirname "\$0")")"
           export LD_LIBRARY_PATH="\$this_dir/lib:\$LD_LIBRARY_PATH"
           export PATH="\$this_dir/bin:\$PATH"
-          echo exec "\$this_dir/bin/$BINARY_PATH" "\$@"
+          exec "\$this_dir/bin/$BINARY_PATH" "\$@"
           EOF
           chmod +x AppDir/AppRun
           cp web/icons/Icon-512.png AppDir/icon.png
@@ -55,10 +56,10 @@ jobs:
           ./appimagetool-x86_64.AppImage AppDir/
           mkdir -p artifacts/build/linux
           cp ./"$BINARY_NAME"-"$ARCH".AppImage artifacts/build/linux/
-      - name: Build apk
-        run: |
-          flutter build apk --release --split-per-abi
-          cp -r build/app/outputs/flutter-apk artifacts/build/
+      # - name: Build apk
+      #   run: |
+      #     flutter build apk --release --split-per-abi
+      #     cp -r build/app/outputs/flutter-apk artifacts/build/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
