@@ -1,3 +1,5 @@
+on: workflow_dispatch
+
 steps:
   - name: Clone repository
     uses: actions/checkout@v4
