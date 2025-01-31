@@ -10,5 +10,16 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build ipa
+        run: flutter build ipa --release --no-codesign
+      - name: Build apk
+        run: flutter build apk --release --split-per-abi
+      - name: Compress artifacts
+        run: tar czvf build.tar.gz --transform='s,^,build/,' build/app/outputs/flutter-apk build/ios/iphoneos
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: build.tar.gz
