@@ -1,14 +1,16 @@
-# README
+# hadocrx
 
-## About  
+A new Flutter project.
 
-**HadocRx** is a cross-platform digital prescription management software designed to modernize the process of creating, managing, and sharing medical prescriptions. Built for **Windows** and **Linux**, HadocRx offers a secure and efficient way to handle prescriptions, helping healthcare professionals focus more on patient care and less on paperwork.  
+## Getting Started
 
-### Why Choose HadocRx?  
-- **Efficiency**: Streamline prescription workflows, saving valuable time.  
-- **Accuracy**: Reduce errors with structured digital prescription formats.  
-- **Accessibility**: Securely store and retrieve prescriptions with ease.  
-- **Sustainability**: Promote eco-friendly practices by minimizing paper use.  
+This project is a starting point for a Flutter application.
 
-HadocRx is focused on desktop environments and does not currently support mobile devices, ensuring an optimized experience tailored to practitioners and administrators.  
+A few resources to get you started if this is your first Flutter project:
 
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
