@@ -2,24 +2,21 @@ use std::rc::Rc;
 
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
-use gtk::{gio, Entry, EntryIconPosition, Label, ListItem, ListView, Popover, ScrolledWindow, SignalListItemFactory, SingleSelection};
+use gtk::{gio, Label, ListItem, ListView, Popover, ScrolledWindow, SearchEntry, SignalListItemFactory, SingleSelection};
 use gtk::prelude::*;
 
 #[allow(dead_code)]
-pub fn new<T>
-(data: T, icon_release: impl Fn(&Entry, EntryIconPosition) + 'static) -> Rc<Entry> 
+pub fn new<T>(data: T) -> Rc<SearchEntry> 
 where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
-    let entry = Entry::builder()
+    let entry = SearchEntry::builder()
         .hexpand(true)
         .placeholder_text("Search by Brand or Generic Name")
-        // https://specifications.freedesktop.org/icon-naming-spec/latest/#names
-        .primary_icon_name("system-search")
-        .secondary_icon_name("edit-clear")
         .build();
 
     let popover = Popover::builder()
         .has_arrow(false)
         .autohide(false)
+        .can_focus(false)
         .build();
     
     popover.set_parent(&entry);
@@ -27,9 +24,7 @@ where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
     let entry_rc = Rc::new(entry);
     let popover_rc = Rc::new(popover);
     let popover_clone = popover_rc.clone();
-    let popover_clone_for_unparent = popover_rc.clone();
-
-    entry_rc.connect_icon_release(icon_release); 
+    let popover_clone_for_unparent = popover_rc.clone(); 
 
     entry_rc.connect_changed(move |object| {
         let query = object.text().to_string();
@@ -67,14 +62,13 @@ where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
     });
 
     entry_rc.connect_activate(move |object| {
-        let selection_model = popover_clone
-            .child().unwrap()
-            .first_child().unwrap().downcast_ref::<ListView>().unwrap()
-            .model().unwrap();
-        let selected_item = selection_model.downcast_ref::<SingleSelection>().unwrap().selected_item().unwrap();
-        let text: String = selected_item.property("text");
+        let scrollable_area = popover_clone.child().unwrap();
+        let first_child = scrollable_area.first_child().unwrap();
+        let list_view = first_child.downcast_ref::<ListView>().unwrap();
+        let text = get_selected_item_text(list_view);
         
         object.set_text(text.as_str());
+        object.set_position(-1);
         popover_clone.popdown();
     });
 
@@ -83,6 +77,12 @@ where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
     });
     
     entry_rc.clone()
+}
+
+fn get_selected_item_text(list_view: &ListView) -> String {
+    let selection_model = list_view.model().unwrap();
+    let selected_item = selection_model.downcast_ref::<SingleSelection>().unwrap().selected_item().unwrap();
+    selected_item.property("text")
 }
 
 #[allow(dead_code)]

@@ -2,7 +2,7 @@ use gtk::prelude::*;
 use gtk::{
     glib, 
     Application, ApplicationWindow, 
-    CssProvider, EntryIconPosition
+    CssProvider 
 };
 
 mod components;
@@ -49,26 +49,10 @@ fn build_ui(app: &Application) {
 
     window.maximize();
 
-    let entry_rc = components::search_bar::new(DATA, move |object, icon_position| {
-        match icon_position {
-            EntryIconPosition::Primary => {
-                search(object.text().as_str());
-            },
-            EntryIconPosition::Secondary => {
-                object.set_text("");
-            }
-            _ => {}
-        }
-    }); 
+    let entry_rc = components::search_bar::new(DATA); 
     let vbox = components::vbox();
     vbox.append(&*entry_rc);
     window.set_child(Some(&vbox)); 
 
     window.present();
-}
-
-#[allow(dead_code)]
-fn search(query: &str) {
-    eprintln!("Search not implemented yet!");
-    eprintln!("query: {}", query);
 }
