@@ -11,7 +11,7 @@ static LAST_UPDATED: RwLock<Duration> = RwLock::new(Duration::ZERO);
 
 #[allow(dead_code)]
 pub fn new<T>(data: T) -> Rc<SearchEntry> 
-where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
+where T: IntoIterator + Clone + 'static, T::Item: ToString {
     let entry = SearchEntry::builder()
         .hexpand(true)
         .placeholder_text("Search by Brand or Generic Name")
@@ -51,7 +51,7 @@ where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
         let matcher = SkimMatcherV2::default();
         let lower_query = query.to_lowercase();
         let mut matched_items: Vec<(String, i64)> = Vec::new();
-        for item in data {
+        for item in data.clone() {
             let item_text = item.to_string();
             if let Some(score) = matcher.fuzzy_match(item_text.as_str(), &lower_query) {
                 matched_items.push((item_text, score));

@@ -42,14 +42,15 @@ fn build_ui(app: &Application) {
 
     let window = ApplicationWindow::builder()
         .application(app)
-        .default_width(400)
-        .default_height(300)
+        // .default_width(400)
+        // .default_height(300)
         .title("HadocRx")
         .build(); 
 
     window.maximize();
 
-    let entry_rc = components::search_bar::new(DATA); 
+    let data = DATA.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+    let entry_rc = components::search_bar::new(data); 
     let vbox = components::vbox();
     vbox.append(&*entry_rc);
     window.set_child(Some(&vbox)); 
