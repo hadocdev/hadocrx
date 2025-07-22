@@ -1,9 +1,13 @@
 use std::rc::Rc;
+use std::sync::RwLock;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use gtk::{gio, Label, ListItem, ListView, Popover, ScrolledWindow, SearchEntry, SignalListItemFactory, SingleSelection};
 use gtk::prelude::*;
+
+static LAST_UPDATED: RwLock<Duration> = RwLock::new(Duration::ZERO);
 
 #[allow(dead_code)]
 pub fn new<T>(data: T) -> Rc<SearchEntry> 
@@ -26,7 +30,19 @@ where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
     let popover_clone = popover_rc.clone();
     let popover_clone_for_unparent = popover_rc.clone(); 
 
-    entry_rc.connect_changed(move |object| {
+    {
+        let mut last_updated = LAST_UPDATED.write().unwrap();
+        *last_updated = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    }
+
+    entry_rc.connect_search_changed(move |object| { 
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        let elapsed;
+        {
+            let last_updated = LAST_UPDATED.read().unwrap();
+            elapsed = now - *last_updated;
+        }
+        if elapsed < Duration::from_millis(object.search_delay() as u64 + 1) { return; }
         let query = object.text().to_string();
         if query.is_empty() {
             popover_rc.popdown();
@@ -62,14 +78,20 @@ where T: IntoIterator + Clone + Copy + 'static, T::Item: ToString {
     });
 
     entry_rc.connect_activate(move |object| {
-        let scrollable_area = popover_clone.child().unwrap();
-        let first_child = scrollable_area.first_child().unwrap();
-        let list_view = first_child.downcast_ref::<ListView>().unwrap();
-        let text = get_selected_item_text(list_view);
-        
-        object.set_text(text.as_str());
-        object.set_position(-1);
-        popover_clone.popdown();
+        if popover_clone.is_visible() {
+            let scrollable_area = popover_clone.child().unwrap();
+            let first_child = scrollable_area.first_child().unwrap();
+            let list_view = first_child.downcast_ref::<ListView>().unwrap();
+            let text = get_selected_item_text(list_view);
+
+            {
+                let mut last_updated = LAST_UPDATED.write().unwrap();
+                *last_updated = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+            }
+            object.set_text(text.as_str()); 
+            object.set_position(-1);
+            popover_clone.popdown();
+        }
     });
 
     entry_rc.clone().connect_destroy(move |_| {
