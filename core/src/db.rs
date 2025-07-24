@@ -1,13 +1,17 @@
-use std::sync::{Arc, Mutex, OnceLock};
+use std::{fs::File, sync::{Arc, Mutex, OnceLock}};
 use ffi_convert::{CReprOf, CStringArray};
 use rusqlite::{Connection, OpenFlags};
 
-const DRUGS_DB_PATH: &str = "drugs.db";
+const DRUGS_DB_BYTES: &[u8] = include_bytes!("../../drugs.db");
 static DRUGS_DB_CONN: OnceLock<Arc<Mutex<Connection>>> = OnceLock::new();
 
 #[allow(dead_code)]
 fn get_drugs_db_connection() -> &'static Arc<Mutex<Connection>> {
-    let conn = Connection::open_with_flags(DRUGS_DB_PATH, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+    let temp_dir = tempfile::tempdir().unwrap();
+    let temp_db_path = temp_dir.path().join("drugs.db");
+    File::create(&temp_db_path).unwrap();
+    std::fs::write(&temp_db_path, DRUGS_DB_BYTES).unwrap();
+    let conn = Connection::open_with_flags(&temp_db_path, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
     DRUGS_DB_CONN.get_or_init(|| Arc::new(Mutex::new(conn)))
 }
 
