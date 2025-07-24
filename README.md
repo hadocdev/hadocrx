@@ -8,6 +8,8 @@ Simple prescription writer and patient database software.
 
 ## Project To-Dos
 - [ ] common (business logic)
+    - [ ] open drugs.db as read-only [https://docs.rs/rusqlite/latest/rusqlite/]
+    - [ ] use database migrations for patient database [https://docs.rs/rusqlite_migration/latest/rusqlite_migration/]
 - [ ] app/linux
     - [ ] read code from [https://github.com/iman-salmani/iplan] to understand libadwaita-rs
     - [ ] migrate from gtk4-rs to libadwaita-rs

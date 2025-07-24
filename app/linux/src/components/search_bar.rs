@@ -2,10 +2,10 @@ use std::rc::Rc;
 use std::sync::RwLock;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use fuzzy_matcher::skim::SkimMatcherV2;
-use fuzzy_matcher::FuzzyMatcher;
 use gtk::{gio, Label, ListItem, ListView, Popover, ScrolledWindow, SearchEntry, SignalListItemFactory, SingleSelection};
 use gtk::prelude::*;
+
+use crate::hadocrx;
 
 static LAST_UPDATED: RwLock<Duration> = RwLock::new(Duration::ZERO);
 
@@ -48,12 +48,11 @@ where T: IntoIterator + Clone + 'static, T::Item: ToString {
             popover_rc.popdown();
             return;
         }
-        let matcher = SkimMatcherV2::default();
         let lower_query = query.to_lowercase();
         let mut matched_items: Vec<(String, i64)> = Vec::new();
         for item in data.clone() {
             let item_text = item.to_string();
-            if let Some(score) = matcher.fuzzy_match(item_text.as_str(), &lower_query) {
+            if let Some(score) = hadocrx::utils::fuzzy_match(item_text.as_str(), &lower_query) {
                 matched_items.push((item_text, score));
             }
         } 
@@ -67,10 +66,21 @@ where T: IntoIterator + Clone + 'static, T::Item: ToString {
         let factory = create_factory();
         let selection_model = SingleSelection::new(Some(model));
         let list_view = ListView::new(Some(selection_model), Some(factory));
+        let toplevels = gtk::Window::toplevels();
+        let mut height = 0;
+        for i in 0..toplevels.n_items() {
+            let item = toplevels.item(i).unwrap();
+            let window = item.downcast_ref::<gtk::Window>().unwrap();
+            if window.is_active() {
+                height = window.size(gtk::Orientation::Vertical);
+                break;
+            }
+        }
+        let min_height = if height<250 { height/2 } else { 150 };
         let scrollable_area = ScrolledWindow::builder()
             .child(&list_view)
             .min_content_width(object.width())
-            .min_content_height(150)
+            .min_content_height(min_height)
             .build();
 
         popover_rc.set_child(Some(&scrollable_area));

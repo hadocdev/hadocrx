@@ -390,10 +390,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "hadocrx-linux"
+name = "hadocrx"
 version = "0.1.0"
 dependencies = [
  "fuzzy-matcher",
+]
+
+[[package]]
+name = "hadocrx-linux"
+version = "0.1.0"
+dependencies = [
  "gtk4",
  "libadwaita",
 ]
