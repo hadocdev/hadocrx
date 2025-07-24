@@ -7,4 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
+ffi-convert = "0.6.2"
 fuzzy-matcher = "0.3.7"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+rusqlite_migration = "2.3.0"

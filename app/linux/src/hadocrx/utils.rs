@@ -6,6 +6,7 @@ unsafe extern "C" {
     fn fuzzy_match_unsafe(choice: *const c_char, pattern: *const c_char) -> i64;
 }
 
+#[allow(dead_code)]
 pub fn fuzzy_match(choice: &str, pattern: &str) -> Option<i64> {
     let value = unsafe {
         fuzzy_match_unsafe(

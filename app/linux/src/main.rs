@@ -11,18 +11,6 @@ mod models;
 mod hadocrx;
 
 const APP_ID: &str = "org.hadoc.rx";
-const DATA: &[&str] = &[
-        "Paracetamol",
-        "Ibuprofen",
-        "Amoxicillin",
-        "Metformin",
-        "Omeprazole",
-        "Simvastatin",
-        "Lisinopril",
-        "Amlodipine",
-        "Salbutamol",
-        "Cetirizine",
-    ];
 
 fn main() -> glib::ExitCode {
     let app = adw::Application::builder().application_id(APP_ID).build();
@@ -46,11 +34,12 @@ fn build_ui(app: &adw::Application) {
         .title("HadocRx")
         .build(); 
 
-    let data = DATA.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-    let entry_rc = components::search_bar::new(data); 
+    let generics = hadocrx::db::get_generics();
+    let entry_rc = components::search_bar::new(generics); 
     let vbox = components::vbox();
     vbox.append(&*entry_rc);
     window.set_content(Some(&vbox));
+
 
     window.present();
 }
