@@ -1,6 +1,3 @@
 [workspace]
 resolver = "3"
 members = ["core", "app/linux"]
-
-[profile.release]
-opt-level = 3
