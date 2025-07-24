@@ -42,7 +42,7 @@ where T: IntoIterator + Clone + 'static, T::Item: ToString {
             let last_updated = LAST_UPDATED.read().unwrap();
             elapsed = now - *last_updated;
         }
-        if elapsed < Duration::from_millis(object.search_delay() as u64 + 1) { return; }
+        if elapsed < Duration::from_millis(object.search_delay() as u64 + 50) { return; }
         let query = object.text().to_string();
         if query.is_empty() {
             popover_rc.popdown();
