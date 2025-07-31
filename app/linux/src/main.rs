@@ -35,9 +35,10 @@ fn build_ui(app: &adw::Application) {
         .build(); 
 
     let generics = hadocrx::db::get_generics();
-    let entry_rc = components::search_bar::new(generics); 
     let vbox = components::vbox();
-    vbox.append(&*entry_rc);
+    let search_bar = components::search_bar::SearchBar::new(generics);
+    search_bar.initialize();
+    vbox.append(&search_bar.entry);
     window.set_content(Some(&vbox));
 
 
