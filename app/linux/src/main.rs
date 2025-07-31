@@ -34,13 +34,29 @@ fn build_ui(app: &adw::Application) {
         .title("HadocRx")
         .build(); 
 
-    let generics = hadocrx::db::get_generics();
+    let generic_names = hadocrx::db::get_generic_names();
+    let brand_names = hadocrx::db::get_brand_names();
     let vbox = widgets::vbox();
-    let search_bar = widgets::search_bar::SearchBar::new(generics);
-    search_bar.initialize();
-    vbox.append(&search_bar.entry);
+    vbox.set_spacing(8);
+    
+    let generic_name_search_box = widgets::search_box::SearchBox::new();
+    generic_name_search_box.entry.set_placeholder_text(Some("Generic Name"));
+    generic_name_search_box.initialize(generic_names);
+    
+    let brand_name_search_box = widgets::search_box::SearchBox::new();
+    brand_name_search_box.entry.set_placeholder_text(Some("Brand Name"));
+    brand_name_search_box.initialize(brand_names);
+
+    let generic_name_search_box_clone = generic_name_search_box.clone();
+    brand_name_search_box.entry.connect_activate(move |object| {
+        let generic_name = hadocrx::db::get_generic_name_by_brand_name(object.text().to_string());
+        generic_name_search_box_clone.entry.set_text(&generic_name);
+        *generic_name_search_box_clone.expected_programmatic_change.borrow_mut() = Some(generic_name.clone()); 
+    });
+    
+    vbox.append(&generic_name_search_box.entry);
+    vbox.append(&brand_name_search_box.entry);
+ 
     window.set_content(Some(&vbox));
-
-
     window.present();
 }

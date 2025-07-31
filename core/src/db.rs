@@ -1,4 +1,4 @@
-use std::{env::current_exe, fs, sync::{Arc, Mutex, OnceLock}};
+use std::{cell::RefCell, env::current_exe, ffi::{c_char, CStr, CString}, fs, sync::{Arc, Mutex, OnceLock}};
 use ffi_convert::{CReprOf, CStringArray};
 use rusqlite::{Connection, OpenFlags};
 use rusqlite_migration::{Migrations, M};
@@ -10,6 +10,10 @@ const DRUGS_MIGRATION_SLICE: &[M] = &[
 const DRUGS_MIGRATIONS: Migrations = Migrations::from_slice(DRUGS_MIGRATION_SLICE);
 
 static DRUGS_DB_CONN: OnceLock<Arc<Mutex<Connection>>> = OnceLock::new();
+
+thread_local! {
+    static LAST_GENERIC_NAME: RefCell<Option<CString>> = RefCell::new(None);
+}
 
 #[allow(dead_code)]
 fn get_drugs_db_connection() -> &'static Arc<Mutex<Connection>> {
@@ -38,11 +42,44 @@ fn get_drugs_db_connection() -> &'static Arc<Mutex<Connection>> {
 
 #[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_generics() -> CStringArray {
+pub extern "C" fn get_generic_names() -> CStringArray {
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
     let mut stmt = conn_guard.prepare("SELECT name FROM Generics ORDER BY name").unwrap();
-    let rows = stmt.query_map([], |row| row.get::<usize, String>(0)).unwrap(); 
-    let generics: Vec<String> = rows.map(|row| row.unwrap()).collect();
-    CStringArray::c_repr_of(generics).unwrap()
+    let rows = stmt.query_map([], |row| row.get::<usize, Option<String>>(0)).unwrap(); 
+    let generic_names: Vec<String> = rows.map(|row| row.unwrap().unwrap_or_default()).collect();
+    CStringArray::c_repr_of(generic_names).unwrap()
+}
+
+#[allow(dead_code)]
+#[unsafe(no_mangle)]
+pub extern "C" fn get_generic_name_by_brand_name(brand_name: *const c_char) -> *const c_char {
+    let brand_name_str = unsafe { CStr::from_ptr(brand_name).to_str().unwrap() };
+    let conn_arc_mutex = get_drugs_db_connection();
+    let conn_guard = conn_arc_mutex.lock().unwrap();
+    let mut stmt = conn_guard.prepare("SELECT Generics.name FROM Drugs JOIN Generics ON Generics.id == Drugs.generic_id WHERE Drugs.brand_name = ?1").unwrap();
+    let rows = stmt.query_map([brand_name_str], |row| row.get::<usize, Option<String>>(0)).unwrap();
+    let mut generic_name = String::new();
+    for row in rows {
+        generic_name = row.unwrap().unwrap();
+        break;
+    }
+    let cstring = CString::c_repr_of(generic_name).unwrap();
+    let ptr = cstring.as_ptr();
+
+    LAST_GENERIC_NAME.with(|last| {
+        *last.borrow_mut() = Some(cstring);
+    });
+    ptr
+}
+
+#[allow(dead_code)]
+#[unsafe(no_mangle)]
+pub extern "C" fn get_brand_names() -> CStringArray {
+    let conn_arc_mutex = get_drugs_db_connection();
+    let conn_guard = conn_arc_mutex.lock().unwrap();
+    let mut stmt = conn_guard.prepare("SELECT brand_name FROM Drugs").unwrap();
+    let rows = stmt.query_map([], |row| row.get::<usize, Option<String>>(0)).unwrap(); 
+    let brand_names: Vec<String> = rows.map(|row| row.unwrap().unwrap_or_default()).collect();
+    CStringArray::c_repr_of(brand_names).unwrap()
 }

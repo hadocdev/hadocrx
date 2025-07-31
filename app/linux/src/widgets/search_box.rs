@@ -2,38 +2,40 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gtk::gdk::Key;
+use gtk::glib::Propagation;
 use gtk::{gio, Label, ListItem, ListScrollFlags, ListView, ScrolledWindow, SignalListItemFactory, SingleSelection};
 use gtk::prelude::*;
 
 use crate::hadocrx;
 
 #[allow(dead_code)]
-pub struct SearchBar {
+pub struct SearchBox {
     pub entry: gtk::SearchEntry,
     pub popover: gtk::Popover,
-    data: Vec<String>,
-    expected_programmatic_change: RefCell<Option<String>>
+    pub expected_programmatic_change: RefCell<Option<String>>
 }
 
 #[allow(dead_code)]
-impl SearchBar {
-    pub fn new(data: Vec<String>) -> Rc<Self> {
+impl SearchBox {
+    pub fn new() -> Rc<Self> {
         let entry = gtk::SearchEntry::new();
         let popover = gtk::Popover::builder()
             .has_arrow(false)
             .autohide(false)
             .can_focus(false)
             .build();
-        let expected_programmatic_change = RefCell::new(None);
-        Rc::new(Self { entry, popover, data, expected_programmatic_change})
+        Rc::new(Self { 
+            entry, popover, 
+            expected_programmatic_change: RefCell::new(None)
+        })
     }
 
-    pub fn initialize(self: &Rc<Self>) {
+    pub fn initialize(self: &Rc<Self>, data: Vec<String>) {
         self.popover.set_parent(&self.entry); 
         
         let self_clone = self.clone();
         self.entry.connect_search_changed(move |object| { 
-            self_clone.handle_search_changed(object);
+            self_clone.handle_search_changed(object, data.clone());
         });
 
         let self_clone = self.clone();
@@ -44,12 +46,26 @@ impl SearchBar {
         let self_clone = self.clone();
         let key_event_controller = gtk::EventControllerKey::new();
         key_event_controller.connect_key_released(move |_, key, _, _| {
-            self_clone.handle_key_event(key); 
+            self_clone.handle_key_released(key); 
+        });
+        let self_clone = self.clone();
+        key_event_controller.connect_key_pressed(move |_, key, _, _| {
+            self_clone.handle_key_pressed(key) 
         });
         self.entry.add_controller(key_event_controller);
     }
 
-    fn handle_key_event(&self, key: Key) {
+    fn handle_key_pressed(&self, key: Key) -> Propagation {
+        if self.popover.is_visible() {
+            match key {
+               Key::Up | Key::Down => { return Propagation::Stop; },
+               _ => { return Propagation::Proceed; }
+            }
+        }
+        gtk::glib::Propagation::Proceed
+    }
+
+    fn handle_key_released(&self, key: Key) {
         if self.popover.is_visible() {
             let scrollable_area = self.popover.child().unwrap();
             let first_child = scrollable_area.first_child().unwrap();
@@ -88,7 +104,7 @@ impl SearchBar {
         }
     }
 
-    fn handle_search_changed(self: &Rc<Self>, object: &gtk::SearchEntry) {
+    fn handle_search_changed(self: &Rc<Self>, object: &gtk::SearchEntry, data: Vec<String>) {
         let current_text = object.text().to_string();
         let mut mutable_ref = self.expected_programmatic_change.borrow_mut();
         if let Some(expected) = mutable_ref.as_ref() {
@@ -104,7 +120,7 @@ impl SearchBar {
         }
         let lower_query = query.to_lowercase();
         let mut matched_items: Vec<(String, i64)> = Vec::new();
-        for item in self.data.clone() {
+        for item in data.clone() {
             let item_text = item.to_string();
             if let Some(score) = hadocrx::utils::fuzzy_match(item_text.as_str(), &lower_query) {
                 matched_items.push((item_text, score));

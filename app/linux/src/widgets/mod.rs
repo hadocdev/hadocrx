@@ -1,5 +1,5 @@
 use gtk::{glib, prelude::{ButtonExt, WidgetExt}, Orientation};
-pub mod search_bar; 
+pub mod search_box; 
 
 const DEFAULT_MARGIN: i32 = 4;
 
