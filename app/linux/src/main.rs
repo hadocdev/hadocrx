@@ -5,7 +5,7 @@ use gtk::{
     CssProvider 
 };
 
-mod components;
+mod widgets;
 mod styles;
 mod models;
 mod hadocrx;
@@ -35,8 +35,8 @@ fn build_ui(app: &adw::Application) {
         .build(); 
 
     let generics = hadocrx::db::get_generics();
-    let vbox = components::vbox();
-    let search_bar = components::search_bar::SearchBar::new(generics);
+    let vbox = widgets::vbox();
+    let search_bar = widgets::search_bar::SearchBar::new(generics);
     search_bar.initialize();
     vbox.append(&search_bar.entry);
     window.set_content(Some(&vbox));
