@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+	<gresource prefix="/org/hadoc/rx">
+		<file>icons/fa-arrow-up.svg</file>
+		<file>icons/fa-arrow-up-dark.svg</file>
+		<file>icons/fa-arrow-down.svg</file>
+		<file>icons/fa-arrow-down-dark.svg</file>
+		<file>icons/fa-arrow-delete.svg</file>
+		<file>icons/fa-arrow-delete-dark.svg</file>
+	</gresource>
+</gresources>

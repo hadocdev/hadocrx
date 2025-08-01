@@ -13,6 +13,7 @@ static DRUGS_DB_CONN: OnceLock<Arc<Mutex<Connection>>> = OnceLock::new();
 
 thread_local! {
     static LAST_GENERIC_NAME: RefCell<Option<CString>> = RefCell::new(None);
+    static LAST_BRAND_NAME: RefCell<Option<CString>> = RefCell::new(None);
 }
 
 #[allow(dead_code)]
@@ -75,10 +76,102 @@ pub extern "C" fn get_generic_name_by_brand_name(brand_name: *const c_char) -> *
 
 #[allow(dead_code)]
 #[unsafe(no_mangle)]
+pub extern "C" fn get_brand_name_by_generic_name_and_strength(
+    brand_name: *const c_char, generic_name: *const c_char, strength: *const c_char
+) -> *const c_char {
+    let brand_name_str = unsafe { CStr::from_ptr(brand_name).to_str().unwrap() };
+    let generic_name_str = unsafe { CStr::from_ptr(generic_name).to_str().unwrap() };
+    let strength_str = unsafe { CStr::from_ptr(strength).to_str().unwrap() };
+    
+    let conn_arc_mutex = get_drugs_db_connection();
+    let conn_guard = conn_arc_mutex.lock().unwrap();
+    let brand_name = if brand_name_str.is_empty() {
+        let mut stmt = conn_guard.prepare("
+            SELECT d.brand_name FROM Drugs d 
+            JOIN Generics g ON g.id == d.generic_id 
+            JOIN Strengths s ON s.id == d.strength_id
+            WHERE g.name = ?1 AND s.value = ?2
+        ").unwrap();
+        let mut rows = stmt.query_map([generic_name_str, strength_str], |row| row.get::<usize, String>(0)).unwrap();
+        rows.next().unwrap().unwrap_or_default()
+    } else {
+        let mut stmt = conn_guard.prepare("
+            SELECT m.name FROM Drugs d
+            JOIN Manufacturers m ON m.id == d.manufacturer_id
+            WHERE d.brand_name = ?1
+        ").unwrap();
+        let rows = stmt.query_map([brand_name_str], |row| row.get::<usize, String>(0)).unwrap();
+        let mut manufacturer_name = String::new();
+        for row in rows {
+            manufacturer_name = row.unwrap();
+        }
+        let mut stmt = conn_guard.prepare("
+            SELECT d.brand_name FROM Drugs d 
+            JOIN Generics g ON g.id == d.generic_id 
+            JOIN Strengths s ON s.id == d.strength_id
+            JOIN Manufacturers m ON m.id == d.manufacturer_id
+            WHERE g.name = ?1 AND s.value = ?2 AND m.name = ?3
+        ").unwrap();
+        let mut rows = stmt.query_map([generic_name_str, strength_str, manufacturer_name.as_str()], |row| row.get::<usize, String>(0)).unwrap();
+        if let Some(row) = rows.next() { row.unwrap_or_default() } else { 
+            let mut stmt = conn_guard.prepare("
+                SELECT d.brand_name FROM Drugs d 
+                JOIN Generics g ON g.id == d.generic_id 
+                JOIN Strengths s ON s.id == d.strength_id
+                WHERE g.name = ?1 AND s.value = ?2
+            ").unwrap();
+            let mut rows = stmt.query_map([generic_name_str, strength_str], |row| row.get::<usize, String>(0)).unwrap();
+            rows.next().unwrap().unwrap_or_default()
+        }
+    };
+    
+    let cstring = CString::c_repr_of(brand_name).unwrap();
+    let ptr = cstring.as_ptr();
+
+    LAST_BRAND_NAME.with(|last| {
+        *last.borrow_mut() = Some(cstring);
+    });
+    ptr
+}
+
+#[allow(dead_code)]
+#[unsafe(no_mangle)]
+pub extern "C" fn get_strengths_by_generic_name(generic_name: *const c_char) -> CStringArray {
+    let generic_name_str = unsafe { CStr::from_ptr(generic_name).to_str().unwrap() };
+    let conn_arc_mutex = get_drugs_db_connection();
+    let conn_guard = conn_arc_mutex.lock().unwrap();
+    let mut stmt = conn_guard.prepare(
+        "SELECT DISTINCT s.value FROM Drugs d JOIN Generics g ON g.id == d.generic_id JOIN Strengths s ON s.id == d.strength_id WHERE g.name = ?1"
+    ).unwrap();
+    let rows = stmt.query_map([generic_name_str], |row| row.get::<usize, Option<String>>(0)).unwrap(); 
+    let strengths: Vec<String> = rows.map(|row| row.unwrap().unwrap_or_default()).collect();
+    CStringArray::c_repr_of(strengths).unwrap()
+}
+
+#[allow(dead_code)]
+#[unsafe(no_mangle)]
+pub extern "C" fn get_formulations_by_brand_name_and_strength(brand_name: *const c_char, strength: *const c_char) -> CStringArray {
+    let brand_name_str = unsafe { CStr::from_ptr(brand_name).to_str().unwrap() };
+    let strength_str = unsafe { CStr::from_ptr(strength).to_str().unwrap() };
+    let conn_arc_mutex = get_drugs_db_connection();
+    let conn_guard = conn_arc_mutex.lock().unwrap();
+    let mut stmt = conn_guard.prepare("
+        SELECT DISTINCT do.value FROM Drugs d
+        JOIN Strengths s ON s.id == d.strength_id
+        JOIN Dosages do ON do.id == d.dosage_id 
+        WHERE d.brand_name = ?1 AND s.value = ?2
+    ").unwrap();
+    let rows = stmt.query_map([brand_name_str, strength_str], |row| row.get::<usize, Option<String>>(0)).unwrap(); 
+    let formulations: Vec<String> = rows.map(|row| row.unwrap().unwrap_or_default()).collect();
+    CStringArray::c_repr_of(formulations).unwrap()
+}
+
+#[allow(dead_code)]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_brand_names() -> CStringArray {
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
-    let mut stmt = conn_guard.prepare("SELECT brand_name FROM Drugs").unwrap();
+    let mut stmt = conn_guard.prepare("SELECT DISTINCT brand_name FROM Drugs").unwrap();
     let rows = stmt.query_map([], |row| row.get::<usize, Option<String>>(0)).unwrap(); 
     let brand_names: Vec<String> = rows.map(|row| row.unwrap().unwrap_or_default()).collect();
     CStringArray::c_repr_of(brand_names).unwrap()
