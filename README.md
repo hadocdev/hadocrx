@@ -22,3 +22,6 @@ Simple prescription writer and patient database software.
             - [ ] load prescription -> dialog box that shows all precriptions of current patient -> on selection load prescription in a new tab
         - [ ] tabs for prescription writing
 - [ ] app/windows
+
+## Screenshots
+<img width="500" alt="image" src="https://github.com/user-attachments/assets/02edfc3d-1b5b-4e19-88d8-4387c128fa23" />
