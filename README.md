@@ -24,4 +24,5 @@ Simple prescription writer and patient database software.
 - [ ] app/windows
 
 ## Screenshots
-<img width="500" alt="image" src="https://github.com/user-attachments/assets/02edfc3d-1b5b-4e19-88d8-4387c128fa23" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/7069fbe6-b0d8-4730-9e8e-a79edfa47ba3" />
+
