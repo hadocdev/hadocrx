@@ -1,9 +1,10 @@
-use gtk::{glib, prelude::{BoxExt, ButtonExt, WidgetExt}, Orientation};
+use gtk::{glib::{self, object::IsA}, prelude::{BoxExt, ButtonExt, WidgetExt}, Orientation};
 pub mod search_box; 
 pub mod dropdown_box; 
 pub mod utils;
 pub mod medicine_row;
 pub mod medicine_box;
+pub mod bangla_entry;
 
 const DEFAULT_MARGIN: i32 = 4;
 
@@ -25,15 +26,32 @@ pub fn button<F: Fn(&gtk::Button) + 'static>
 }
 
 #[allow(dead_code)]
-pub fn horizontal_icon_button(text: &str, icon_name: &str) -> gtk::Button {
-    let hbox = hbox();
-    hbox.set_spacing(8);
-    let label = label(text);
-    let icon = gtk::Image::builder().icon_name(icon_name).build();
-    hbox.append(&icon);
-    hbox.append(&label);
-    gtk::Button::builder().child(&hbox).build()
+pub fn combo_button_fn<T: IsA<gtk::Widget>>(orientation: gtk::Orientation, children: Vec<Box<T>>) -> gtk::Button {
+    let container = gtk::Box::builder()
+        .orientation(orientation)
+        .margin_start(DEFAULT_MARGIN).margin_end(DEFAULT_MARGIN)
+        .margin_top(DEFAULT_MARGIN).margin_bottom(DEFAULT_MARGIN)
+        .spacing(8)
+        .build();
+    for child in children {
+        container.append(&*child);
+    }
+    gtk::Button::builder().child(&container).build()
 }
+
+#[macro_export]
+macro_rules! combo_button {
+    ( $orientation:expr, $($val:expr),+ ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(
+                temp_vec.push(Box::new(Into::<gtk::Widget>::into($val)));
+            )+
+            crate::widgets::combo_button_fn($orientation, temp_vec)
+        }  
+    };
+}
+pub (super) use combo_button;
 
 #[allow(dead_code)]
 pub fn vertical_icon_button(text: &str, icon_name: &str) -> gtk::Button {
@@ -44,6 +62,11 @@ pub fn vertical_icon_button(text: &str, icon_name: &str) -> gtk::Button {
     vbox.append(&icon);
     vbox.append(&label);
     gtk::Button::builder().child(&vbox).build()
+}
+
+#[allow(dead_code)]
+pub fn custom_icon_button(icon_name: &str) -> gtk::Button {
+    gtk::Button::builder().icon_name(&utils::get_theme_aware_icon_name(icon_name)).build()
 }
 
 #[allow(dead_code)]

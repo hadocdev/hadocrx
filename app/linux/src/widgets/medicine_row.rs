@@ -1,6 +1,6 @@
-use std::env;
+use gtk::prelude::WidgetExt;
 
-use gtk::prelude::ButtonExt;
+use super::custom_icon_button;
 
 pub struct MedicineRow {
     pub label_formulation: gtk::Label,
@@ -13,34 +13,35 @@ pub struct MedicineRow {
 }
 
 impl MedicineRow {
-    pub fn new(formulation: String, brand_name: String, generic_name: String, strength: String) -> Self {
-        let label_brand_name = gtk::Label::builder().label(brand_name).css_classes(["heading"]).build();
-        let label_generic_name = gtk::Label::builder().label(generic_name).css_classes(["caption"]).build();
+    pub fn new(formulation: &str, brand_name: &str, generic_name: &str, strength: &str) -> Self {
+        let label_formulation = Self::label_with_class(formulation, None);
+        let label_brand_name = Self::label_with_class(brand_name, Some("title-2"));
+        let label_generic_name = Self::label_with_class(generic_name, Some("caption"));
+        let label_strength = Self::label_with_class(strength, None);
        
-        let settings = gtk::Settings::for_display(&gtk::gdk::Display::default().unwrap());
-        let should_be_dark = settings.is_gtk_application_prefer_dark_theme() || env::var("GTK_THEME").unwrap().contains(":dark"); 
-
-        let btn_up = gtk::Button::new();
-        let btn_down = gtk::Button::new();
-        let btn_delete = gtk::Button::new();
-        if should_be_dark {
-            btn_up.set_icon_name("fa-arrow-up-dark");
-            btn_down.set_icon_name("fa-arrow-down-dark");
-            btn_delete.set_icon_name("fa-arrow-delete-dark");
-        } else {
-            btn_up.set_icon_name("fa-arrow-up");
-            btn_down.set_icon_name("fa-arrow-down");
-            btn_delete.set_icon_name("fa-arrow-delete");
-        }
+        let btn_up = custom_icon_button("fa-arrow-up"); 
+        btn_up.add_css_class("flat");
+        let btn_down = custom_icon_button("fa-arrow-down");
+        btn_down.add_css_class("flat");
+        let btn_delete = custom_icon_button("fa-arrow-delete");
+        btn_delete.add_css_class("flat");
 
         Self { 
-            label_formulation: gtk::Label::builder().label(formulation).build(), 
+            label_formulation, 
             label_brand_name, 
             label_generic_name, 
-            label_strength: gtk::Label::builder().label(strength).build(), 
+            label_strength, 
             btn_up, 
             btn_down,
             btn_delete 
         }
+    }
+
+    fn label_with_class(text: &str, css_class: Option<&str>) -> gtk::Label {
+        let label = gtk::Label::builder().label(text).valign(gtk::Align::Baseline).build();
+        if let Some(class) = css_class {
+            label.add_css_class(class);
+        }
+        label
     }
 }

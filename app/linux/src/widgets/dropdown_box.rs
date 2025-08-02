@@ -76,6 +76,16 @@ impl DropdownBox {
         }
     }
 
+    pub fn update_entry_text(&self, text: String) {
+        self.entry.set_text(&text);
+        *self.expected_programmatic_change.borrow_mut() = Some(text.clone()); 
+        self.entry.set_position(-1);
+        self.entry.set_secondary_icon_name(Some("pan-down-symbolic"));
+        if self.popover.is_visible() {
+            self.popover.popdown(); 
+        }
+    }
+
     fn handle_entry_icon_release(&self, entry: &gtk::Entry, _position: EntryIconPosition) {
         if self.popover.is_visible() { 
             entry.set_secondary_icon_name(Some("pan-down-symbolic"));
@@ -121,20 +131,12 @@ impl DropdownBox {
         }
     }
 
-    fn handle_entry_activate(&self, entry: &gtk::Entry) {
-        if self.popover.is_visible() {
-            let scrollable_area = self.popover.child().unwrap();
-            let first_child = scrollable_area.first_child().unwrap();
-            let list_view = first_child.downcast_ref::<ListView>().unwrap();
-            let text = super::utils::get_selected_item_text_from_list_view(list_view);
-
-            *self.expected_programmatic_change.borrow_mut() = Some(text.clone()); 
-
-            entry.set_text(text.as_str()); 
-            entry.set_position(-1);
-            entry.set_secondary_icon_name(Some("pan-down-symbolic"));
-            self.popover.popdown(); 
-        }
+    fn handle_entry_activate(&self, _entry: &gtk::Entry) {
+        let scrollable_area = self.popover.child().unwrap();
+        let first_child = scrollable_area.first_child().unwrap();
+        let list_view = first_child.downcast_ref::<ListView>().unwrap();
+        let text = super::utils::get_selected_item_text_from_list_view(list_view);
+        self.update_entry_text(text);
     }
 
     fn handle_entry_changed(self: &Rc<Self>, entry: &gtk::Entry, data: Vec<String>) {

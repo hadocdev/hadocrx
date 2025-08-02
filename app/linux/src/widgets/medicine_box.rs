@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use adw::prelude::ExpanderRowExt;
 use gtk::prelude::{BoxExt, WidgetExt};
 
 use super::medicine_row::MedicineRow;
@@ -33,36 +32,24 @@ impl MedicineBox {
         }
         
         for row in self.rows.borrow().iter() {
-            let suffix = super::hbox();
-            let prefix = super::vbox();
-            let body = super::hbox();
-            body.set_spacing(8);
-
-            row.label_brand_name.add_css_class("heading");
-            row.label_brand_name.set_halign(gtk::Align::Start);
-            prefix.append(&row.label_brand_name);
-
-            row.label_generic_name.add_css_class("caption");
-            row.label_generic_name.set_halign(gtk::Align::Start);
-            prefix.append(&row.label_generic_name);
-
-            suffix.set_spacing(8);
-            suffix.set_margin_end(16);
-            suffix.append(&super::hspacer());
-            suffix.append(&row.btn_up);
-            suffix.append(&row.btn_down);
-            suffix.append(&row.btn_delete);
-
-            body.append(&row.label_formulation);
-            body.append(&row.label_strength);
+            let row_hbox = super::hbox();
+            row_hbox.add_css_class("medicine_box_row");
+            row_hbox.set_spacing(8);
             
-            let expander_row = adw::ExpanderRow::new();
-            expander_row.add_prefix(&prefix);
-            expander_row.add_suffix(&suffix);
-            expander_row.add_row(&body);
+            row_hbox.append(&row.label_formulation);
+            row_hbox.append(&row.label_brand_name);
+            row_hbox.append(&row.label_generic_name);
+            row_hbox.append(&row.label_strength);
+            
+            row_hbox.append(&super::hspacer());
+            row_hbox.append(&row.btn_up);
+            row_hbox.append(&row.btn_down);
+            row_hbox.append(&row.btn_delete);
+
+            
             // expander_row.set_title(row.label_brand_name.label().as_str());
             // expander_row.set_subtitle(row.label_generic_name.label().as_str());
-            self.container.append(&expander_row);
+            self.container.append(&row_hbox);
         }
     }
 }

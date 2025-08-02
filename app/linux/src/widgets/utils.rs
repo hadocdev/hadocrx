@@ -1,4 +1,4 @@
-use gtk::{gio, glib::object::{Cast, CastNone, ObjectExt}, prelude::{BoxExt, ListItemExt, WidgetExt}, Label, ListItem, ListView, SignalListItemFactory, SingleSelection};
+use gtk::{gio, glib::object::{Cast, CastNone, ObjectExt}, prelude::{BoxExt, ListItemExt, RootExt, WidgetExt}, Label, ListItem, ListView, SignalListItemFactory, SingleSelection};
 
 #[allow(dead_code)]
 pub fn create_gio_liststore_model(data: Vec<String>) -> gio::ListStore {
@@ -39,4 +39,26 @@ pub fn get_selected_item_text_from_list_view(list_view: &ListView) -> String {
     let selection_model = list_view.model().unwrap();
     let selected_item = selection_model.downcast_ref::<SingleSelection>().unwrap().selected_item().unwrap();
     selected_item.property("text")
+}
+
+#[allow(dead_code)]
+pub fn get_theme_aware_icon_name(icon_name: &str) -> String {
+    let mut output = icon_name.to_string();
+    let settings = gtk::Settings::for_display(&gtk::gdk::Display::default().unwrap());
+    let should_be_dark = settings.is_gtk_application_prefer_dark_theme() || std::env::var("GTK_THEME").unwrap().contains(":dark");
+    if should_be_dark {
+        output.push_str("-dark");
+    } 
+    output
+}
+
+#[allow(dead_code)]
+pub fn is_focused<W: WidgetExt>(widget: &W) -> bool {
+    if let Some(root) = widget.root() {
+        if let Some(focused) = root.focus() {
+            return focused.is_ancestor(widget);
+        }
+        return false;
+    }
+    false
 }

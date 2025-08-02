@@ -35,27 +35,36 @@ impl SearchBox {
         
         let self_clone = self.clone();
         self.entry.connect_search_changed(move |object| { 
-            self_clone.handle_search_changed(object, data.clone());
+            self_clone.handle_entry_search_changed(object, data.clone());
         });
 
         let self_clone = self.clone();
         self.entry.connect_activate(move |object| {
-            self_clone.handle_activate(object);
+            self_clone.handle_entry_activate(object);
         });
 
         let self_clone = self.clone();
         let key_event_controller = gtk::EventControllerKey::new();
         key_event_controller.connect_key_released(move |_, key, _, _| {
-            self_clone.handle_key_released(key); 
+            self_clone.handle_entry_key_released(key); 
         });
         let self_clone = self.clone();
         key_event_controller.connect_key_pressed(move |_, key, _, _| {
-            self_clone.handle_key_pressed(key) 
+            self_clone.handle_entry_key_pressed(key) 
         });
         self.entry.add_controller(key_event_controller);
     }
 
-    fn handle_key_pressed(&self, key: Key) -> Propagation {
+    pub fn update_entry_text(&self, text: String) {
+        self.entry.set_text(&text);
+        *self.expected_programmatic_change.borrow_mut() = Some(text.clone()); 
+        if super::utils::is_focused(&self.entry) { self.entry.set_position(-1); }
+        if self.popover.is_visible() {
+            self.popover.popdown(); 
+        }
+    }
+
+    fn handle_entry_key_pressed(&self, key: Key) -> Propagation {
         if self.popover.is_visible() {
             match key {
                Key::Up | Key::Down => { return Propagation::Stop; },
@@ -65,7 +74,7 @@ impl SearchBox {
         gtk::glib::Propagation::Proceed
     }
 
-    fn handle_key_released(&self, key: Key) {
+    fn handle_entry_key_released(&self, key: Key) {
         if self.popover.is_visible() {
             let scrollable_area = self.popover.child().unwrap();
             let first_child = scrollable_area.first_child().unwrap();
@@ -89,22 +98,16 @@ impl SearchBox {
         }
     }
 
-    fn handle_activate(&self, object: &gtk::SearchEntry) {
-        if self.popover.is_visible() {
-            let scrollable_area = self.popover.child().unwrap();
+    fn handle_entry_activate(&self, _entry: &gtk::SearchEntry) {
+        if let Some(scrollable_area) = self.popover.child() {
             let first_child = scrollable_area.first_child().unwrap();
             let list_view = first_child.downcast_ref::<ListView>().unwrap();
             let text = super::utils::get_selected_item_text_from_list_view(list_view);
-
-            *self.expected_programmatic_change.borrow_mut() = Some(text.clone()); 
-
-            object.set_text(text.as_str()); 
-            object.set_position(-1);
-            self.popover.popdown(); 
+            self.update_entry_text(text);
         }
     }
 
-    fn handle_search_changed(self: &Rc<Self>, object: &gtk::SearchEntry, data: Vec<String>) {
+    fn handle_entry_search_changed(self: &Rc<Self>, object: &gtk::SearchEntry, data: Vec<String>) {
         let current_text = object.text().to_string();
         let mut mutable_ref = self.expected_programmatic_change.borrow_mut();
         if let Some(expected) = mutable_ref.as_ref() {
