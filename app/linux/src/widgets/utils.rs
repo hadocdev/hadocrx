@@ -62,3 +62,36 @@ pub fn is_focused<W: WidgetExt>(widget: &W) -> bool {
     }
     false
 }
+
+#[macro_export]
+macro_rules! validation_errors {
+    ( $($item:ident),+ ) => {
+        {
+            let mut empty_items = Vec::new();
+            $(
+                let item_name = stringify!($item);
+                if $item.is_empty() {
+                    empty_items.push(
+                        item_name.to_string().split("_").map(|s| s.to_uppercase()).collect::<Vec<String>>().join(" ")
+                    );
+                }
+            )*
+            if empty_items.is_empty() {
+                None
+            } else if empty_items.len() == 1{
+                Some(format!("{} is required", empty_items[0]))
+            } else {
+                let mut error_message = empty_items[0].clone();
+                for i in 1..empty_items.len()-1 {
+                    error_message.push_str(", ");
+                    error_message.push_str(&empty_items[i]);
+                }
+                error_message.push_str(" and ");
+                error_message.push_str(&empty_items.last().unwrap());
+                error_message.push_str(" are required");
+                Some(error_message)
+            }
+        }  
+    };
+}
+pub (crate) use validation_errors;

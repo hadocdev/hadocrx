@@ -1,4 +1,4 @@
-use gtk::prelude::WidgetExt;
+// use gtk::prelude::WidgetExt;
 
 use super::custom_icon_button;
 
@@ -7,41 +7,43 @@ pub struct MedicineRow {
     pub label_brand_name: gtk::Label,
     pub label_generic_name: gtk::Label,
     pub label_strength: gtk::Label,
+    pub label_dosing: gtk::Label,
+    pub label_duration: gtk::Label,
+    pub label_instructions: gtk::Label,
+    
     pub btn_up: gtk::Button,
     pub btn_down: gtk::Button,
     pub btn_delete: gtk::Button,
 }
 
 impl MedicineRow {
-    pub fn new(formulation: &str, brand_name: &str, generic_name: &str, strength: &str) -> Self {
-        let label_formulation = Self::label_with_class(formulation, None);
-        let label_brand_name = Self::label_with_class(brand_name, Some("title-2"));
-        let label_generic_name = Self::label_with_class(generic_name, Some("caption"));
-        let label_strength = Self::label_with_class(strength, None);
+    pub fn new(formulation: &str, brand_name: &str, generic_name: &str, strength: &str, dosing: &str, duration: &str, instructions: &str) -> Self {
+        let label_formulation = gtk::Label::builder().label(formulation).halign(gtk::Align::Start).build();
+        let label_brand_name = gtk::Label::builder().label(brand_name).css_classes(["title-2"]).halign(gtk::Align::Start).build();
+        let label_generic_name = gtk::Label::builder().label(generic_name).css_classes(["caption"]).halign(gtk::Align::Start).build();
+        let label_strength = gtk::Label::builder().label(strength).halign(gtk::Align::Start).build();
+        let label_dosing = gtk::Label::builder().label(dosing).selectable(true).halign(gtk::Align::Start).build();
+        let label_duration = gtk::Label::builder().label(duration).selectable(true).halign(gtk::Align::Start).build();
+        let label_instructions = gtk::Label::builder().label(instructions).selectable(true).halign(gtk::Align::Start).build();
        
         let btn_up = custom_icon_button("fa-arrow-up"); 
-        btn_up.add_css_class("flat");
         let btn_down = custom_icon_button("fa-arrow-down");
-        btn_down.add_css_class("flat");
         let btn_delete = custom_icon_button("fa-arrow-delete");
-        btn_delete.add_css_class("flat");
+        // btn_up.add_css_class("flat");
+        // btn_down.add_css_class("flat");
+        // btn_delete.add_css_class("flat");
 
         Self { 
             label_formulation, 
             label_brand_name, 
             label_generic_name, 
-            label_strength, 
+            label_strength,
+            label_dosing,
+            label_duration,
+            label_instructions,
             btn_up, 
             btn_down,
             btn_delete 
         }
-    }
-
-    fn label_with_class(text: &str, css_class: Option<&str>) -> gtk::Label {
-        let label = gtk::Label::builder().label(text).valign(gtk::Align::Baseline).build();
-        if let Some(class) = css_class {
-            label.add_css_class(class);
-        }
-        label
     }
 }

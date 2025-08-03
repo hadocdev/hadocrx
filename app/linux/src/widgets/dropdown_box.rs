@@ -73,13 +73,16 @@ impl DropdownBox {
         if let Some(child) = self.popover.child() { drop(child); }
         if let Some(scrollable_area) = self.create_scollable_area(String::new(), data.clone()) {
             self.popover.set_child(Some(&scrollable_area));
+        } else {
+            self.entry.set_secondary_icon_sensitive(false);
         }
+        self.update_entry_text(String::new());
     }
 
     pub fn update_entry_text(&self, text: String) {
         self.entry.set_text(&text);
         *self.expected_programmatic_change.borrow_mut() = Some(text.clone()); 
-        self.entry.set_position(-1);
+        self.entry.set_position(0);
         self.entry.set_secondary_icon_name(Some("pan-down-symbolic"));
         if self.popover.is_visible() {
             self.popover.popdown(); 

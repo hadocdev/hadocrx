@@ -7,5 +7,9 @@ pub const CSS: &str = r#"
         border-radius: 12px;
         padding: 8px 12px;
         border: 1px solid @borders;
-    } 
+    }  
+
+    .underline {
+        text-decoration: underline;
+    }
 "#;

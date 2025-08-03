@@ -1,20 +1,25 @@
 use std::rc::Rc;
 
-use adw::prelude::AdwApplicationWindowExt;
-use gtk::{prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, GtkWindowExt, WidgetExt}, CssProvider};
+use adw::prelude::{AdwApplicationWindowExt, AdwDialogExt};
+use gtk::{prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, GtkWindowExt,  WidgetExt}, CssProvider};
 
 use super::{ widgets, styles, hadocrx };
 
 pub struct AppState {
     pub widgets: AppWidgets,
-    pub window: adw::ApplicationWindow
+    pub window: adw::ApplicationWindow,
+    pub dialog: adw::Dialog,
 }
 
 impl AppState {
     pub fn new(app: &adw::Application) -> Rc<Self> {
         let widgets = AppWidgets::new();
         let window = Self::create_window(app);
-        Rc::new(Self { widgets, window })
+        let dialog = adw::Dialog::builder()
+            .content_width(300)
+            .content_height(200)
+            .build();
+        Rc::new(Self { widgets, window, dialog })
     }
 
     pub fn setup_ui(self: &Rc<Self>) {
@@ -76,15 +81,16 @@ impl AppState {
         self.widgets.grid.attach(&label, 2, 1, 1, 1);
         self.widgets.grid.attach(&self.widgets.dosing_box.entry, 3, 1, 1, 1);
 
-        let label = widgets::label("Instructions");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 2, 2, 1, 1);
-        self.widgets.grid.attach(&self.widgets.instructions_box.entry, 3, 2, 1, 1);
-
         let label = widgets::label("Duration");
         label.set_halign(gtk::Align::End);
+        self.widgets.grid.attach(&label, 2, 2, 1, 1);
+        self.widgets.grid.attach(&self.widgets.duration_box.entry, 3, 2, 1, 1);
+
+        let label = widgets::label("Instructions");
+        label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 2, 3, 1, 1);
-        self.widgets.grid.attach(&self.widgets.duration_box.entry, 3, 3, 1, 1);
+        self.widgets.grid.attach(&self.widgets.instructions_box.entry, 3, 3, 1, 1);
+        
         self.widgets.grid.attach(&self.widgets.btn_add, 4, 1, 1, 1);
         
         self.widgets.container.append(&self.widgets.grid);
@@ -95,52 +101,106 @@ impl AppState {
         let generic_names = hadocrx::db::get_generic_names();
         let brand_names = hadocrx::db::get_brand_names();
         self.widgets.generic_name_search_box.initialize(generic_names);
-        self.widgets.brand_name_search_box.initialize(brand_names); 
+        self.widgets.brand_name_search_box.initialize(brand_names);
         self.widgets.strength_dropdown_box.initialize(Vec::new()); 
-        self.widgets.formulation_dropdown_box.initialize(Vec::new()); 
+        self.widgets.formulation_dropdown_box.initialize(Vec::new());
+        self.widgets.manufacturer_dropdown_box.initialize(Vec::new());
+        self.widgets.strength_dropdown_box.entry.set_secondary_icon_sensitive(false);
+        self.widgets.formulation_dropdown_box.entry.set_secondary_icon_sensitive(false);
+        self.widgets.manufacturer_dropdown_box.entry.set_secondary_icon_sensitive(false);
         
         let self_clone = self.clone();
         self.widgets.brand_name_search_box.entry.connect_activate(move |entry| {
-            // on enter -> 
-            if !entry.text().is_empty() {
-                // if brand_name != empty, get generic_name from the db
-                let brand_name = entry.text().to_string();
-                let generic_name = hadocrx::db::get_generic_name_by_brand_name(brand_name.clone());
-                // update the generic_name box
-                self_clone.widgets.generic_name_search_box.update_entry_text(generic_name.clone());
-                
-                // get available strengths for this generic_name
-                let strengths = hadocrx::db::get_strengths_by_generic_name(generic_name);
-                let count_strengths = strengths.len();
-                self_clone.widgets.strength_dropdown_box.update(strengths); 
-                // if only one strength is available, set it on the strength box
-                if count_strengths == 1 {
-                    self_clone.widgets.strength_dropdown_box.entry.emit_activate();
-                }
+            if entry.text().is_empty() { return; }
+            let brand_name = entry.text().to_string();
+            
+            // get generic_name from the db
+            // update the generic_name box
+            let generic_name = hadocrx::db::get_generic_name_by_brand_name(brand_name.clone());
+            self_clone.widgets.generic_name_search_box.update_entry_text(generic_name.clone());
+            self_clone.widgets.generic_name_search_box.entry.emit_activate();
+
+            // get the manufacturer for this brand_name
+            // get all available manufacturers for this generic_name
+            // update the manufacturer box
+            let manufacturer = hadocrx::db::get_manufacturer_by_brand_name(brand_name); 
+            
+            self_clone.widgets.manufacturer_dropdown_box.update_entry_text(manufacturer.clone()); 
+            // enable the manufacturer dropdown
+            if !self_clone.widgets.manufacturer_dropdown_box.entry.is_secondary_icon_sensitive() {
+                self_clone.widgets.manufacturer_dropdown_box.entry.set_secondary_icon_sensitive(true);
+            }
+            
+            // get available strengths for this generic_name
+            let strengths = hadocrx::db::get_strengths_by_generic_name(generic_name);
+            let count_strengths = strengths.len();
+            self_clone.widgets.strength_dropdown_box.update(strengths);
+            // enable the strength dropdown
+            self_clone.widgets.strength_dropdown_box.entry.set_secondary_icon_sensitive(true);
+            // if only one strength is available, set it on the strength box
+            if count_strengths == 1 {
+                self_clone.widgets.strength_dropdown_box.entry.emit_activate();
+            } else {
+                self_clone.widgets.formulation_dropdown_box.update(Vec::new());
             }
         });
 
         let self_clone = self.clone();
+        self.widgets.generic_name_search_box.entry.connect_activate(move |entry| {
+            if entry.text().is_empty() { return; }
+            let generic_name = entry.text().to_string();
+            let manufacturers = hadocrx::db::get_manufacturers_by_generic_name(generic_name.clone());
+            self_clone.widgets.manufacturer_dropdown_box.update(manufacturers);
+        });
+
+        let self_clone = self.clone();
         self.widgets.strength_dropdown_box.entry.connect_activate(move |entry| {
+            if entry.text().is_empty() { return; }
             let strength = entry.text().to_string();
+            let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
+            let manufacturer = self_clone.widgets.manufacturer_dropdown_box.entry.text().to_string();
             // get the correct brand_name for the generic_name, strength and manufacturer 
-            let brand_name = hadocrx::db::get_brand_name_by_generic_name_and_strength(
-                self_clone.widgets.brand_name_search_box.entry.text().to_string(),
-                self_clone.widgets.generic_name_search_box.entry.text().to_string(),
-                strength.clone()
+            let brand_name = hadocrx::db::get_brand_name_by_generic_name_manufacturer_and_strength(
+                generic_name.clone(), manufacturer.clone(), strength.clone()
             );
             
-            // set the brand_name in the brand_name box
-            self_clone.widgets.brand_name_search_box.update_entry_text(brand_name.clone());
-            
-            // get available formulations for the brand_name and strength
-            let formulations = hadocrx::db::get_formulations_by_brand_name_and_strength(brand_name, strength);
-            let count_formulations = formulations.len();
-            self_clone.widgets.formulation_dropdown_box.update(formulations);
-            // if only one formulation is available, set it on the formulation box
-            if count_formulations == 1 {
-                self_clone.widgets.formulation_dropdown_box.entry.emit_activate();
+            if let Some(name) = brand_name {
+                self_clone.widgets.brand_name_search_box.update_entry_text(name.clone());
+                // get available formulations for the brand_name and strength
+                let formulations = hadocrx::db::get_formulations_by_brand_name_and_strength(name, strength);
+                let count_formulations = formulations.len();
+                self_clone.widgets.formulation_dropdown_box.update(formulations);
+                // enable the formulation box
+                self_clone.widgets.formulation_dropdown_box.entry.set_secondary_icon_sensitive(true);
+                // if only one formulation is available, set it on the formulation box
+                if count_formulations == 1 {
+                    self_clone.widgets.formulation_dropdown_box.entry.emit_activate();
+                }
+            } else {
+                self_clone.widgets.strength_dropdown_box.update_entry_text(String::new());
+                self_clone.widgets.formulation_dropdown_box.update_entry_text(String::new());
+                let self_clone_clone = self_clone.clone();
+                let content = widgets::alert_dialog(
+                    "Something went wrong!", 
+                    &format!("{} - {} is not available from {}", generic_name, strength, manufacturer),
+                    "Okay", move |_| {
+                        self_clone_clone.dialog.close();
+                    }
+                ); 
+                if let Some(child) = self_clone.dialog.child() { drop(child); }
+                self_clone.dialog.set_child(Some(&content));
+                self_clone.dialog.present(Some(&self_clone.widgets.container));
             }
+        });
+
+        let self_clone = self.clone();
+        self.widgets.manufacturer_dropdown_box.entry.connect_activate(move |entry| {
+            if entry.text().is_empty() { return; }
+            let manufacturer = entry.text().to_string();
+            let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
+            // get brand_name for this manufacturer and generic_name
+            let brand_name = hadocrx::db::get_brand_name_by_generic_name_and_manufacturer(generic_name, manufacturer);
+            self_clone.widgets.brand_name_search_box.update_entry_text(brand_name);
         });
 
         let self_clone = self.clone();
@@ -148,19 +208,43 @@ impl AppState {
             let brand_name = self_clone
                 .widgets.brand_name_search_box.entry.text()
                 .split_whitespace().collect::<Vec<&str>>().join(" ");
-            let generic_name = self_clone.widgets.generic_name_search_box.entry.text();
-            let strength = self_clone.widgets.strength_dropdown_box.entry.text();
-            let formulation = self_clone.widgets.formulation_dropdown_box.entry.text();
-            if !brand_name.is_empty() && !generic_name.is_empty() && !formulation.is_empty() {
+            let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
+            let strength = self_clone.widgets.strength_dropdown_box.entry.text().to_string();
+            let formulation = self_clone.widgets.formulation_dropdown_box.entry.text().to_string();
+            let dosing = self_clone.widgets.dosing_box.entry.text().to_string();
+            let duration = self_clone.widgets.duration_box.entry.text().to_string();
+            let instructions = self_clone.widgets.instructions_box.entry.text().to_string();
+
+            let errors = widgets::utils::validation_errors!(brand_name, strength, formulation, dosing);
+            if let Some(message) = errors {
+                let self_clone_clone = self_clone.clone();
+                let content = widgets::alert_dialog(
+                    "Something went wrong!", 
+                    &message,
+                    "Okay", move |_| {
+                        self_clone_clone.dialog.close();
+                    }
+                ); 
+                if let Some(child) = self_clone.dialog.child() { drop(child); }
+                self_clone.dialog.set_child(Some(&content));
+                self_clone.dialog.present(Some(&self_clone.widgets.container));
+            } else {
                 let medicine_row = widgets::medicine_row::MedicineRow::new(
                     &formulation, &brand_name, 
-                    &generic_name, &strength
+                    &generic_name, &strength, 
+                    &dosing, &duration, &instructions
                 );
                 self_clone.widgets.medicine_box.append(medicine_row);
+                
                 self_clone.widgets.brand_name_search_box.entry.set_text("");
                 self_clone.widgets.generic_name_search_box.entry.set_text("");
-                self_clone.widgets.strength_dropdown_box.entry.set_text("");
-                self_clone.widgets.formulation_dropdown_box.entry.set_text("");
+                self_clone.widgets.strength_dropdown_box.update(Vec::new());
+                self_clone.widgets.formulation_dropdown_box.update(Vec::new());
+                self_clone.widgets.manufacturer_dropdown_box.entry.set_text("");
+                self_clone.widgets.dosing_box.entry.set_text("");
+                self_clone.widgets.duration_box.entry.set_text("");
+                self_clone.widgets.instructions_box.entry.set_text("");
+                
                 self_clone.widgets.brand_name_search_box.entry.grab_focus();
             }
         }); 
@@ -203,7 +287,6 @@ impl AppWidgets {
             .margin_start(16).margin_end(16)
             .column_spacing(16)
             .row_spacing(8)
-            .halign(gtk::Align::Center)
             .build();
         grid.set_size_request(800, -1);
         

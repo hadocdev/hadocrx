@@ -1,4 +1,4 @@
-use gtk::{glib::{self, object::IsA}, prelude::{BoxExt, ButtonExt, WidgetExt}, Orientation};
+use gtk::{glib::{self, object::IsA}, prelude::{BoxExt, ButtonExt, FrameExt, WidgetExt}, Orientation};
 pub mod search_box; 
 pub mod dropdown_box; 
 pub mod utils;
@@ -11,6 +11,45 @@ const DEFAULT_MARGIN: i32 = 4;
 #[allow(dead_code)]
 pub fn label(text: &str) -> gtk::Label {
     gtk::Label::builder().label(text).build()
+}
+
+#[allow(dead_code)]
+pub fn label_left_aligned(text: &str) -> gtk::Label {
+    gtk::Label::builder().label(text).halign(gtk::Align::Start).build()
+}
+
+#[allow(dead_code)]
+pub fn label_with_class(text: &str, css_class: Option<&str>) -> gtk::Label {
+    let label = gtk::Label::builder().label(text).valign(gtk::Align::Baseline).build();
+    if let Some(class) = css_class {
+        label.add_css_class(class);
+    }
+    label
+}
+
+#[allow(dead_code)]
+pub fn alert_dialog<F: Fn(&gtk::Button) + 'static>
+(title_text: &str, body_text: &str, btn_text: &str, on_btn_click: F) -> gtk::Frame {
+    let frame = gtk::Frame::builder()
+        .hexpand(true)
+        .vexpand(true)
+        .build();
+    let vbox = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .margin_start(16).margin_end(16).margin_top(16).margin_bottom(16)
+        .build();
+    frame.set_child(Some(&vbox));
+    vbox.set_spacing(8);
+    let title = label_with_class(title_text, Some("title-3"));
+    let body = label(body_text);
+    body.set_wrap(true);
+    let btn_ok = gtk::Button::with_label(btn_text); 
+    btn_ok.connect_clicked(on_btn_click);
+    vbox.append(&title);
+    vbox.append(&body);
+    vbox.append(&vspacer());
+    vbox.append(&btn_ok);
+    frame
 }
 
 #[allow(dead_code)]
