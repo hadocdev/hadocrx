@@ -1,24 +1,20 @@
 use std::rc::Rc;
 
-use adw::prelude::{AdwApplicationWindowExt, AdwDialogExt};
 use gtk::{prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, GtkWindowExt,  WidgetExt}, CssProvider};
 
 use super::{ widgets, styles, hadocrx };
 
 pub struct AppState {
     pub widgets: AppWidgets,
-    pub window: adw::ApplicationWindow,
-    pub dialog: adw::Dialog,
+    pub window: gtk::ApplicationWindow,
+    pub dialog: gtk::AlertDialog,
 }
 
 impl AppState {
-    pub fn new(app: &adw::Application) -> Rc<Self> {
+    pub fn new(app: &gtk::Application) -> Rc<Self> {
         let widgets = AppWidgets::new();
         let window = Self::create_window(app);
-        let dialog = adw::Dialog::builder()
-            .content_width(300)
-            .content_height(200)
-            .build();
+        let dialog = gtk::AlertDialog::builder().build();     
         Rc::new(Self { widgets, window, dialog })
     }
 
@@ -41,7 +37,7 @@ impl AppState {
     }
 
     fn setup_layout(&self) {
-        let header = adw::HeaderBar::new();
+        let header = gtk::HeaderBar::new();
         let root = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .margin_start(0).margin_end(0).margin_top(0).margin_bottom(0)
@@ -49,7 +45,7 @@ impl AppState {
         let scrolled_window = gtk::ScrolledWindow::builder().child(&self.widgets.container).build();
         root.append(&header);
         root.append(&scrolled_window);
-        self.window.set_content(Some(&root));
+        self.window.set_child(Some(&root));
         
         let label = widgets::label("Brand Name");
         label.set_halign(gtk::Align::End);
@@ -179,17 +175,9 @@ impl AppState {
             } else {
                 self_clone.widgets.strength_dropdown_box.update_entry_text(String::new());
                 self_clone.widgets.formulation_dropdown_box.update_entry_text(String::new());
-                let self_clone_clone = self_clone.clone();
-                let content = widgets::alert_dialog(
-                    "Something went wrong!", 
-                    &format!("{} - {} is not available from {}", generic_name, strength, manufacturer),
-                    "Okay", move |_| {
-                        self_clone_clone.dialog.close();
-                    }
-                ); 
-                if let Some(child) = self_clone.dialog.child() { drop(child); }
-                self_clone.dialog.set_child(Some(&content));
-                self_clone.dialog.present(Some(&self_clone.widgets.container));
+                self_clone.dialog.set_message("Unavailable!");
+                self_clone.dialog.set_detail(&format!("{} - {} is not available from {}", generic_name, strength, manufacturer));
+                self_clone.dialog.show(Some(&self_clone.window));
             }
         });
 
@@ -217,17 +205,9 @@ impl AppState {
 
             let errors = widgets::utils::validation_errors!(brand_name, strength, formulation, dosing);
             if let Some(message) = errors {
-                let self_clone_clone = self_clone.clone();
-                let content = widgets::alert_dialog(
-                    "Something went wrong!", 
-                    &message,
-                    "Okay", move |_| {
-                        self_clone_clone.dialog.close();
-                    }
-                ); 
-                if let Some(child) = self_clone.dialog.child() { drop(child); }
-                self_clone.dialog.set_child(Some(&content));
-                self_clone.dialog.present(Some(&self_clone.widgets.container));
+                self_clone.dialog.set_message("Required fields are empty!");
+                self_clone.dialog.set_detail(&message);
+                self_clone.dialog.show(Some(&self_clone.window));
             } else {
                 let medicine_row = widgets::medicine_row::MedicineRow::new(
                     &formulation, &brand_name, 
@@ -250,8 +230,8 @@ impl AppState {
         }); 
     }
 
-    fn create_window(app: &adw::Application) -> adw::ApplicationWindow {
-        adw::ApplicationWindow::builder()
+    fn create_window(app: &gtk::Application) -> gtk::ApplicationWindow {
+        gtk::ApplicationWindow::builder()
             .application(app)
             .title("HadocRx")
             .build()
