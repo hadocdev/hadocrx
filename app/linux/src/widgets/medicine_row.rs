@@ -1,8 +1,12 @@
 // use gtk::prelude::WidgetExt;
 
+use crate::hadocrx::prescription::MedicineData;
+
 use super::custom_icon_button;
 
+#[derive(Debug)]
 pub struct MedicineRow {
+    pub data: MedicineData,
     pub label_formulation: gtk::Label,
     pub label_brand_name: gtk::Label,
     pub label_generic_name: gtk::Label,
@@ -17,14 +21,15 @@ pub struct MedicineRow {
 }
 
 impl MedicineRow {
-    pub fn new(formulation: &str, brand_name: &str, generic_name: &str, strength: &str, dosing: &str, duration: &str, instructions: &str) -> Self {
-        let label_formulation = gtk::Label::builder().label(formulation).halign(gtk::Align::Start).build();
-        let label_brand_name = gtk::Label::builder().label(brand_name).css_classes(["title-2"]).halign(gtk::Align::Start).build();
-        let label_generic_name = gtk::Label::builder().label(generic_name).css_classes(["caption"]).halign(gtk::Align::Start).build();
-        let label_strength = gtk::Label::builder().label(strength).halign(gtk::Align::Start).build();
-        let label_dosing = gtk::Label::builder().label(dosing).selectable(true).halign(gtk::Align::Start).build();
-        let label_duration = gtk::Label::builder().label(duration).selectable(true).halign(gtk::Align::Start).build();
-        let label_instructions = gtk::Label::builder().label(instructions).selectable(true).halign(gtk::Align::Start).build();
+    pub fn new(medicine_data: MedicineData) -> Self {
+        let data = medicine_data;
+        let label_formulation = gtk::Label::builder().label(&data.formulation).halign(gtk::Align::Start).build();
+        let label_brand_name = gtk::Label::builder().label(&data.brand_name).css_classes(["heading"]).halign(gtk::Align::Start).build();
+        let label_generic_name = gtk::Label::builder().label(&data.generic_name).css_classes(["caption"]).halign(gtk::Align::Start).build();
+        let label_strength = gtk::Label::builder().label(&data.strength).halign(gtk::Align::Start).build();
+        let label_dosing = gtk::Label::builder().label(&data.dosing).selectable(true).halign(gtk::Align::Start).build();
+        let label_duration = gtk::Label::builder().label(&data.duration).selectable(true).halign(gtk::Align::Start).build();
+        let label_instructions = gtk::Label::builder().label(&data.instructions).selectable(true).halign(gtk::Align::Start).build();
        
         let btn_up = custom_icon_button("fa-arrow-up"); 
         let btn_down = custom_icon_button("fa-arrow-down");
@@ -34,6 +39,7 @@ impl MedicineRow {
         // btn_delete.add_css_class("flat");
 
         Self { 
+            data,
             label_formulation, 
             label_brand_name, 
             label_generic_name, 

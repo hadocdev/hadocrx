@@ -4,7 +4,7 @@ pub mod dropdown_box;
 pub mod utils;
 pub mod medicine_row;
 pub mod medicine_box;
-pub mod bangla_entry;
+pub mod avro_phonetic_entry;
 
 const DEFAULT_MARGIN: i32 = 4;
 

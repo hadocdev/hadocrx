@@ -6,4 +6,3 @@ edition = "2024"
 [dependencies]
 ffi-convert = "0.6.2"
 gtk = { version = "0.10.0", package = "gtk4", features = ["v4_18"] }
-

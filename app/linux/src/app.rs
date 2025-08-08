@@ -104,6 +104,7 @@ impl AppState {
         self.widgets.strength_dropdown_box.entry.set_secondary_icon_sensitive(false);
         self.widgets.formulation_dropdown_box.entry.set_secondary_icon_sensitive(false);
         self.widgets.manufacturer_dropdown_box.entry.set_secondary_icon_sensitive(false);
+        self.widgets.dosing_box.initialize();
         
         let self_clone = self.clone();
         self.widgets.brand_name_search_box.entry.connect_activate(move |entry| {
@@ -199,6 +200,7 @@ impl AppState {
             let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
             let strength = self_clone.widgets.strength_dropdown_box.entry.text().to_string();
             let formulation = self_clone.widgets.formulation_dropdown_box.entry.text().to_string();
+            let manufacturer = self_clone.widgets.manufacturer_dropdown_box.entry.text().to_string();
             let dosing = self_clone.widgets.dosing_box.entry.text().to_string();
             let duration = self_clone.widgets.duration_box.entry.text().to_string();
             let instructions = self_clone.widgets.instructions_box.entry.text().to_string();
@@ -209,11 +211,8 @@ impl AppState {
                 self_clone.dialog.set_detail(&message);
                 self_clone.dialog.show(Some(&self_clone.window));
             } else {
-                let medicine_row = widgets::medicine_row::MedicineRow::new(
-                    &formulation, &brand_name, 
-                    &generic_name, &strength, 
-                    &dosing, &duration, &instructions
-                );
+                let medicine_data = hadocrx::prescription::MedicineData::new(brand_name, generic_name, strength, formulation, manufacturer, dosing, instructions, duration);
+                let medicine_row = widgets::medicine_row::MedicineRow::new(medicine_data);
                 self_clone.widgets.medicine_box.append(medicine_row);
                 
                 self_clone.widgets.brand_name_search_box.entry.set_text("");
@@ -246,9 +245,9 @@ pub struct AppWidgets {
     pub strength_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
     pub formulation_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
     pub manufacturer_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
-    pub dosing_box: Rc<widgets::bangla_entry::BanglaEntry>,
-    pub instructions_box: Rc<widgets::bangla_entry::BanglaEntry>,
-    pub duration_box: Rc<widgets::bangla_entry::BanglaEntry>,
+    pub dosing_box: Rc<widgets::avro_phonetic_entry::AvroPhoneticEntry>,
+    pub instructions_box: Rc<widgets::avro_phonetic_entry::AvroPhoneticEntry>,
+    pub duration_box: Rc<widgets::avro_phonetic_entry::AvroPhoneticEntry>,
     pub btn_add: gtk::Button,
     pub medicine_box: Rc<widgets::medicine_box::MedicineBox>
 }
@@ -267,6 +266,7 @@ impl AppWidgets {
             .margin_start(16).margin_end(16)
             .column_spacing(16)
             .row_spacing(8)
+            .halign(gtk::Align::Center)
             .build();
         grid.set_size_request(800, -1);
         
@@ -287,9 +287,9 @@ impl AppWidgets {
         manufacturer_dropdown_box.entry.set_placeholder_text(Some("Manufacturer"));
         manufacturer_dropdown_box.entry.set_size_request(250, -1);
 
-        let dosing_box = widgets::bangla_entry::BanglaEntry::new();
-        let instructions_box = widgets::bangla_entry::BanglaEntry::new();
-        let duration_box = widgets::bangla_entry::BanglaEntry::new();
+        let dosing_box = widgets::avro_phonetic_entry::AvroPhoneticEntry::new();
+        let instructions_box = widgets::avro_phonetic_entry::AvroPhoneticEntry::new();
+        let duration_box = widgets::avro_phonetic_entry::AvroPhoneticEntry::new();
         
         let btn_add = widgets::combo_button!(
             gtk::Orientation::Horizontal,
