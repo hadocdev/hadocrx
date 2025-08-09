@@ -104,7 +104,6 @@ impl AppState {
         self.widgets.strength_dropdown_box.entry.set_secondary_icon_sensitive(false);
         self.widgets.formulation_dropdown_box.entry.set_secondary_icon_sensitive(false);
         self.widgets.manufacturer_dropdown_box.entry.set_secondary_icon_sensitive(false);
-        self.widgets.dosing_box.initialize();
         
         let self_clone = self.clone();
         self.widgets.brand_name_search_box.entry.connect_activate(move |entry| {
