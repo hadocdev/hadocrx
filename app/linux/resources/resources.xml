@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
 	<gresource prefix="/org/hadoc/rx">
+		<file>icons/bn.svg</file>
+		<file>icons/bn-dark.svg</file>
+		<file>icons/en.svg</file>
+		<file>icons/en-dark.svg</file>
 		<file>icons/fa-arrow-up.svg</file>
 		<file>icons/fa-arrow-up-dark.svg</file>
 		<file>icons/fa-arrow-down.svg</file>
