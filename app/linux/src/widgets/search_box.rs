@@ -67,11 +67,12 @@ impl SearchBox {
     fn handle_entry_key_pressed(&self, key: Key) -> Propagation {
         if self.popover.is_visible() {
             match key {
-               Key::Up | Key::Down => { return Propagation::Stop; },
-               _ => { return Propagation::Proceed; }
+                Key::Up | Key::Down => { return Propagation::Stop; },
+                Key::Escape => { self.popover.popdown(); },
+                _ => {}
             }
-        }
-        gtk::glib::Propagation::Proceed
+        }         
+        Propagation::Proceed
     }
 
     fn handle_entry_key_released(&self, key: Key) {

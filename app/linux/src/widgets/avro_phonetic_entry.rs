@@ -8,6 +8,7 @@ use crate::hadocrx;
 pub struct AvroPhoneticEntry {
     pub entry: gtk::Entry,
     pub english_buffer: RefCell<String>,
+    pub processed_buffer: RefCell<String>
 }
 
 impl AvroPhoneticEntry {
@@ -15,6 +16,7 @@ impl AvroPhoneticEntry {
         let self_rc = Rc::new(Self { 
             entry: gtk::Entry::new(),
             english_buffer: RefCell::new(String::new()),
+            processed_buffer: RefCell::new(String::new())
         });
         let key_controller = gtk::EventControllerKey::new();
         key_controller.set_propagation_phase(gtk::PropagationPhase::Capture);
@@ -48,26 +50,20 @@ impl AvroPhoneticEntry {
                 }
                 buffer.pop();
             }
+        } else if keyval == Key::Tab {
+            return glib::Propagation::Proceed;
         } else if keyval == Key::Delete {
 
         } else if keyval == Key::space {
-            let mut entry_text = self.entry.text().to_string();
-            entry_text.push(' ');
-            self.entry.set_text(&entry_text);
-            self.entry.set_position(-1);
             self.english_buffer.borrow_mut().clear();
         } else if let Some(ch) = keyval.to_unicode() {
             let mut buffer = self.english_buffer.borrow_mut();
+            if buffer.is_empty() { *self.processed_buffer.borrow_mut() = self.entry.text().to_string(); }
             buffer.push(ch);
         }
         let buffer = &*self.english_buffer.borrow();
         if !buffer.is_empty() {
-            let mut entry_text = self.entry.text().to_string();
-            if let Some(pos) = entry_text.rfind(' ') {
-                entry_text.truncate(pos + 1);
-            } else {
-                entry_text.clear();
-            }
+            let mut entry_text = self.processed_buffer.borrow().clone();
             entry_text.push_str(&hadocrx::avro_phonetic::convert(buffer));
             self.entry.set_text(&entry_text);
             self.entry.set_position(-1);

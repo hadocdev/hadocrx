@@ -87,11 +87,11 @@ impl AvroPhonetic {
         let chars_len = chars.len();
         let check_char = match condition.match_type {
             MatchType::Prefix => { 
-                if start < 1 { return true; }
+                if start < 1 { return false; }
                 chars[start - 1]
             },
             MatchType::Suffix => {
-                if end + 1 >= chars_len { return true; }
+                if end + 1 >= chars_len { return false; }
                 chars[end + 1]
             }
         };

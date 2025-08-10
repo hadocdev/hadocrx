@@ -77,15 +77,15 @@ impl AppState {
         self.widgets.grid.attach(&label, 2, 1, 1, 1);
         self.widgets.grid.attach(&self.widgets.dosing_box.entry, 3, 1, 1, 1);
 
-        let label = widgets::label("Duration");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 2, 2, 1, 1);
-        self.widgets.grid.attach(&self.widgets.duration_box.entry, 3, 2, 1, 1);
-
         let label = widgets::label("Instructions");
         label.set_halign(gtk::Align::End);
+        self.widgets.grid.attach(&label, 2, 2, 1, 1);
+        self.widgets.grid.attach(&self.widgets.instructions_box.entry, 3, 2, 1, 1);
+
+        let label = widgets::label("Duration");
+        label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 2, 3, 1, 1);
-        self.widgets.grid.attach(&self.widgets.instructions_box.entry, 3, 3, 1, 1);
+        self.widgets.grid.attach(&self.widgets.duration_box.entry, 3, 3, 1, 1);
         
         self.widgets.grid.attach(&self.widgets.btn_add, 4, 1, 1, 1);
         
