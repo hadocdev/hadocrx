@@ -50,12 +50,12 @@ impl AppState {
         let label = widgets::label("Brand Name");
         label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 0, 0, 1, 1);
-        self.widgets.grid.attach(&self.widgets.brand_name_search_box.entry, 1, 0, 1, 1);
+        self.widgets.grid.attach(&self.widgets.brand_name_search_box, 1, 0, 1, 1);
         
         let label = widgets::label("Generic Name");
         label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 0, 1, 1, 1);
-        self.widgets.grid.attach(&self.widgets.generic_name_search_box.entry, 1, 1, 1, 1);
+        self.widgets.grid.attach(&self.widgets.generic_name_search_box, 1, 1, 1, 1);
 
         let label = widgets::label("Strength");
         label.set_halign(gtk::Align::End);
@@ -75,17 +75,17 @@ impl AppState {
         let label = widgets::label("Dosing");
         label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 2, 1, 1, 1);
-        self.widgets.grid.attach(&self.widgets.dosing_box.entry, 3, 1, 1, 1);
+        self.widgets.grid.attach(&self.widgets.dosing_box, 3, 1, 1, 1);
 
         let label = widgets::label("Instructions");
         label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 2, 2, 1, 1);
-        self.widgets.grid.attach(&self.widgets.instructions_box.entry, 3, 2, 1, 1);
+        self.widgets.grid.attach(&self.widgets.instructions_box, 3, 2, 1, 1);
 
         let label = widgets::label("Duration");
         label.set_halign(gtk::Align::End);
         self.widgets.grid.attach(&label, 2, 3, 1, 1);
-        self.widgets.grid.attach(&self.widgets.duration_box.entry, 3, 3, 1, 1);
+        self.widgets.grid.attach(&self.widgets.duration_box, 3, 3, 1, 1);
         
         self.widgets.grid.attach(&self.widgets.btn_add, 4, 1, 1, 1);
         
@@ -106,15 +106,16 @@ impl AppState {
         self.widgets.manufacturer_dropdown_box.entry.set_secondary_icon_sensitive(false);
         
         let self_clone = self.clone();
-        self.widgets.brand_name_search_box.entry.connect_activate(move |entry| {
+        // self.widgets.brand_name_search_box.entry.connect_activate(move |entry| {
+        self.widgets.brand_name_search_box.entry().connect_activate(move |entry| {
             if entry.text().is_empty() { return; }
             let brand_name = entry.text().to_string();
             
             // get generic_name from the db
             // update the generic_name box
             let generic_name = hadocrx::db::get_generic_name_by_brand_name(brand_name.clone());
-            self_clone.widgets.generic_name_search_box.update_entry_text(generic_name.clone());
-            self_clone.widgets.generic_name_search_box.entry.emit_activate();
+            self_clone.widgets.generic_name_search_box.update_entry_text(&generic_name);
+            self_clone.widgets.generic_name_search_box.entry().emit_activate();
 
             // get the manufacturer for this brand_name
             // get all available manufacturers for this generic_name
@@ -142,7 +143,8 @@ impl AppState {
         });
 
         let self_clone = self.clone();
-        self.widgets.generic_name_search_box.entry.connect_activate(move |entry| {
+        // self.widgets.generic_name_search_box.entry.connect_activate(move |entry| {
+        self.widgets.generic_name_search_box.entry().connect_activate(move |entry| {
             if entry.text().is_empty() { return; }
             let generic_name = entry.text().to_string();
             let manufacturers = hadocrx::db::get_manufacturers_by_generic_name(generic_name.clone());
@@ -153,7 +155,7 @@ impl AppState {
         self.widgets.strength_dropdown_box.entry.connect_activate(move |entry| {
             if entry.text().is_empty() { return; }
             let strength = entry.text().to_string();
-            let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
+            let generic_name = self_clone.widgets.generic_name_search_box.entry().text().to_string();
             let manufacturer = self_clone.widgets.manufacturer_dropdown_box.entry.text().to_string();
             // get the correct brand_name for the generic_name, strength and manufacturer 
             let brand_name = hadocrx::db::get_brand_name_by_generic_name_manufacturer_and_strength(
@@ -161,7 +163,7 @@ impl AppState {
             );
             
             if let Some(name) = brand_name {
-                self_clone.widgets.brand_name_search_box.update_entry_text(name.clone());
+                self_clone.widgets.brand_name_search_box.update_entry_text(&name);
                 // get available formulations for the brand_name and strength
                 let formulations = hadocrx::db::get_formulations_by_brand_name_and_strength(name, strength);
                 let count_formulations = formulations.len();
@@ -185,24 +187,28 @@ impl AppState {
         self.widgets.manufacturer_dropdown_box.entry.connect_activate(move |entry| {
             if entry.text().is_empty() { return; }
             let manufacturer = entry.text().to_string();
-            let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
+            let generic_name = self_clone.widgets.generic_name_search_box.entry().text().to_string();
             // get brand_name for this manufacturer and generic_name
             let brand_name = hadocrx::db::get_brand_name_by_generic_name_and_manufacturer(generic_name, manufacturer);
-            self_clone.widgets.brand_name_search_box.update_entry_text(brand_name);
+            self_clone.widgets.brand_name_search_box.update_entry_text(&brand_name);
         });
 
         let self_clone = self.clone();
         self.widgets.btn_add.connect_clicked(move |_| {
             let brand_name = self_clone
-                .widgets.brand_name_search_box.entry.text()
+                .widgets.brand_name_search_box.entry().text()
                 .split_whitespace().collect::<Vec<&str>>().join(" ");
-            let generic_name = self_clone.widgets.generic_name_search_box.entry.text().to_string();
+            let generic_name = self_clone.widgets.generic_name_search_box.entry().text().to_string();
             let strength = self_clone.widgets.strength_dropdown_box.entry.text().to_string();
             let formulation = self_clone.widgets.formulation_dropdown_box.entry.text().to_string();
             let manufacturer = self_clone.widgets.manufacturer_dropdown_box.entry.text().to_string();
-            let dosing = self_clone.widgets.dosing_box.entry.text().to_string();
-            let duration = self_clone.widgets.duration_box.entry.text().to_string();
-            let instructions = self_clone.widgets.instructions_box.entry.text().to_string();
+            // let dosing = self_clone.widgets.dosing_box.entry.text().to_string();
+            // let duration = self_clone.widgets.duration_box.entry.text().to_string();
+            // let instructions = self_clone.widgets.instructions_box.entry.text().to_string();
+            let dosing = self_clone.widgets.dosing_box.text().to_string();
+            let duration = self_clone.widgets.duration_box.text().to_string();
+            let instructions = self_clone.widgets.instructions_box.text().to_string();
+
 
             let errors = widgets::utils::validation_errors!(brand_name, strength, formulation, dosing);
             if let Some(message) = errors {
@@ -214,16 +220,18 @@ impl AppState {
                 let medicine_row = widgets::medicine_row::MedicineRow::new(medicine_data);
                 self_clone.widgets.medicine_box.append(medicine_row);
                 
-                self_clone.widgets.brand_name_search_box.entry.set_text("");
-                self_clone.widgets.generic_name_search_box.entry.set_text("");
+                // self_clone.widgets.brand_name_search_box.entry.set_text("");
+                // self_clone.widgets.generic_name_search_box.entry.set_text("");
                 self_clone.widgets.strength_dropdown_box.update(Vec::new());
                 self_clone.widgets.formulation_dropdown_box.update(Vec::new());
                 self_clone.widgets.manufacturer_dropdown_box.entry.set_text("");
-                self_clone.widgets.dosing_box.entry.set_text("");
-                self_clone.widgets.duration_box.entry.set_text("");
-                self_clone.widgets.instructions_box.entry.set_text("");
+
+                self_clone.widgets.dosing_box.clear();
+                self_clone.widgets.duration_box.clear();
+                self_clone.widgets.instructions_box.clear();
                 
-                self_clone.widgets.brand_name_search_box.entry.grab_focus();
+                // self_clone.widgets.brand_name_search_box.entry.grab_focus();
+                self_clone.widgets.brand_name_search_box.grab_focus();
             }
         }); 
     }
@@ -239,14 +247,14 @@ impl AppState {
 pub struct AppWidgets {
     pub container: gtk::Box,
     pub grid: gtk::Grid,
-    pub brand_name_search_box: Rc<widgets::search_box::SearchBox>,
-    pub generic_name_search_box: Rc<widgets::search_box::SearchBox>,
+    pub brand_name_search_box: widgets::search_box::SearchBox,
+    pub generic_name_search_box: widgets::search_box::SearchBox,
     pub strength_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
     pub formulation_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
     pub manufacturer_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
-    pub dosing_box: Rc<widgets::avro_phonetic_entry::AvroPhoneticEntry>,
-    pub instructions_box: Rc<widgets::avro_phonetic_entry::AvroPhoneticEntry>,
-    pub duration_box: Rc<widgets::avro_phonetic_entry::AvroPhoneticEntry>,
+    pub dosing_box: widgets::avro_phonetic_entry::AvroPhoneticEntry,
+    pub instructions_box: widgets::avro_phonetic_entry::AvroPhoneticEntry,
+    pub duration_box: widgets::avro_phonetic_entry::AvroPhoneticEntry,
     pub btn_add: gtk::Button,
     pub medicine_box: Rc<widgets::medicine_box::MedicineBox>
 }
@@ -270,11 +278,11 @@ impl AppWidgets {
         grid.set_size_request(800, -1);
         
         let brand_name_search_box = widgets::search_box::SearchBox::new();
-        brand_name_search_box.entry.set_placeholder_text(Some("Brand Name"));
-        brand_name_search_box.entry.set_size_request(250, -1);
+        brand_name_search_box.entry().set_placeholder_text(Some("Brand Name"));
+        brand_name_search_box.entry().set_size_request(250, -1);
         
         let generic_name_search_box = widgets::search_box::SearchBox::new();
-        generic_name_search_box.entry.set_placeholder_text(Some("Generic Name"));
+        generic_name_search_box.entry().set_placeholder_text(Some("Generic Name"));
         
         let strength_dropdown_box = widgets::dropdown_box::DropdownBox::new();
         strength_dropdown_box.entry.set_placeholder_text(Some("Strength"));

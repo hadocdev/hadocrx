@@ -11,9 +11,7 @@ mod app;
 const APP_ID: &str = "org.hadoc.rx";
 
 fn main() -> glib::ExitCode {
-    let resource_data = include_bytes!("../compiled.gresource");
-    let resource = gio::Resource::from_data(&glib::Bytes::from(resource_data)).unwrap();
-    gio::resources_register(&resource);
+    gio::resources_register_include!("compiled.gresource").expect("Failed to register resource");
     let app = gtk::Application::builder().application_id(APP_ID).build();
     app.connect_activate(build_ui);
     app.run()
