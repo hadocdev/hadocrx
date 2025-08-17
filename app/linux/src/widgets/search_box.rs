@@ -181,7 +181,7 @@ mod imp {
             let mut matched_items: Vec<(String, i64)> = Vec::new();
             
             for item in data.iter() {
-                if let Some(score) = crate::hadocrx::utils::fuzzy_match(item, &lower_query) {
+                if let Some(score) = hadocrx::ffi::utils::fuzzy_match(item, &lower_query) {
                     matched_items.push((item.clone(), score));
                 }
             }

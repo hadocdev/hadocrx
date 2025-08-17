@@ -279,7 +279,7 @@ fn get_avro_phonetic() -> &'static Arc<Mutex<AvroPhonetic>> {
 
 #[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn avro_phonetic_convert(text: *const c_char) -> *const c_char {
+pub extern "C" fn avro_phonetic_convert_c(text: *const c_char) -> *const c_char {
     let text_str = unsafe { CStr::from_ptr(text).to_str().unwrap() };
     let avro_phonetic_arc_mutex = get_avro_phonetic();
     let avro_phonetic_guard = avro_phonetic_arc_mutex.lock().unwrap();

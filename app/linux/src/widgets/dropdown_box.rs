@@ -6,8 +6,6 @@ use gtk::glib::Propagation;
 use gtk::{EntryIconPosition, ListScrollFlags, ListView, ScrolledWindow, SingleSelection};
 use gtk::prelude::*;
 
-use crate::hadocrx;
-
 #[allow(dead_code)]
 pub struct DropdownBox {
     pub entry: gtk::Entry,
@@ -168,7 +166,7 @@ impl DropdownBox {
         let mut matched_items: Vec<(String, i64)> = Vec::new();
         for item in data.clone() {
             let item_text = item.to_string();
-            let score = hadocrx::utils::fuzzy_match(item_text.as_str(), &lower_query).unwrap_or_default();
+            let score = hadocrx::ffi::utils::fuzzy_match(item_text.as_str(), &lower_query).unwrap_or_default();
             matched_items.push((item_text, score));
         } 
         matched_items.sort_by(|a, b| b.1.cmp(&a.1));

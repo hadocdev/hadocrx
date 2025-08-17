@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::{cell::RefCell, env::current_exe, ffi::{c_char, CStr, CString}, fs, sync::{Arc, Mutex, OnceLock}};
 use ffi_convert::{CReprOf, CStringArray};
 use rusqlite::{Connection, OpenFlags};
@@ -17,7 +19,6 @@ thread_local! {
     static LAST_MANUFACTURER_NAME: RefCell<Option<CString>> = RefCell::new(None);
 }
 
-#[allow(dead_code)]
 fn get_drugs_db_connection() -> &'static Arc<Mutex<Connection>> {
     let exe_path = current_exe().unwrap();
     let exe_dir = exe_path.parent().unwrap();
@@ -42,9 +43,8 @@ fn get_drugs_db_connection() -> &'static Arc<Mutex<Connection>> {
     DRUGS_DB_CONN.get_or_init(|| Arc::new(Mutex::new(conn)))
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_generic_names() -> CStringArray {
+pub extern "C" fn get_generic_names_c() -> CStringArray {
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
     let mut stmt = conn_guard.prepare("SELECT DISTINCT name FROM Generics ORDER BY name").unwrap();
@@ -53,9 +53,8 @@ pub extern "C" fn get_generic_names() -> CStringArray {
     CStringArray::c_repr_of(generic_names).unwrap()
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_generic_name_by_brand_name(brand_name: *const c_char) -> *const c_char {
+pub extern "C" fn get_generic_name_by_brand_name_c(brand_name: *const c_char) -> *const c_char {
     let brand_name_str = unsafe { CStr::from_ptr(brand_name).to_str().unwrap() };
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
@@ -72,9 +71,8 @@ pub extern "C" fn get_generic_name_by_brand_name(brand_name: *const c_char) -> *
 }
 
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_manufacturer_by_brand_name(brand_name: *const c_char) -> *const c_char {
+pub extern "C" fn get_manufacturer_by_brand_name_c(brand_name: *const c_char) -> *const c_char {
     let brand_name_str = unsafe { CStr::from_ptr(brand_name).to_str().unwrap() };
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
@@ -95,9 +93,8 @@ pub extern "C" fn get_manufacturer_by_brand_name(brand_name: *const c_char) -> *
     ptr
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_brand_name_by_generic_name_manufacturer_and_strength(
+pub extern "C" fn get_brand_name_by_generic_name_manufacturer_and_strength_c(
     generic_name: *const c_char, manufacturer: *const c_char, strength: *const c_char
 ) -> *const c_char {
     let generic_name_str = unsafe { CStr::from_ptr(generic_name).to_str().unwrap() };
@@ -128,9 +125,8 @@ pub extern "C" fn get_brand_name_by_generic_name_manufacturer_and_strength(
     }
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_brand_name_by_generic_name_and_manufacturer(
+pub extern "C" fn get_brand_name_by_generic_name_and_manufacturer_c(
     generic_name: *const c_char, manufacturer: *const c_char
 ) -> *const c_char {
     let generic_name_str = unsafe { CStr::from_ptr(generic_name).to_str().unwrap() };
@@ -156,9 +152,8 @@ pub extern "C" fn get_brand_name_by_generic_name_and_manufacturer(
     ptr
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_strengths_by_generic_name(generic_name: *const c_char) -> CStringArray {
+pub extern "C" fn get_strengths_by_generic_name_c(generic_name: *const c_char) -> CStringArray {
     let generic_name_str = unsafe { CStr::from_ptr(generic_name).to_str().unwrap() };
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
@@ -170,9 +165,8 @@ pub extern "C" fn get_strengths_by_generic_name(generic_name: *const c_char) -> 
     CStringArray::c_repr_of(strengths).unwrap()
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_formulations_by_brand_name_and_strength(brand_name: *const c_char, strength: *const c_char) -> CStringArray {
+pub extern "C" fn get_formulations_by_brand_name_and_strength_c(brand_name: *const c_char, strength: *const c_char) -> CStringArray {
     let brand_name_str = unsafe { CStr::from_ptr(brand_name).to_str().unwrap() };
     let strength_str = unsafe { CStr::from_ptr(strength).to_str().unwrap() };
     let conn_arc_mutex = get_drugs_db_connection();
@@ -188,9 +182,8 @@ pub extern "C" fn get_formulations_by_brand_name_and_strength(brand_name: *const
     CStringArray::c_repr_of(formulations).unwrap()
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_brand_names() -> CStringArray {
+pub extern "C" fn get_brand_names_c() -> CStringArray {
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
     let mut stmt = conn_guard.prepare("SELECT DISTINCT brand_name FROM Drugs").unwrap();
@@ -199,9 +192,8 @@ pub extern "C" fn get_brand_names() -> CStringArray {
     CStringArray::c_repr_of(brand_names).unwrap()
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_manufacturers() -> CStringArray {
+pub extern "C" fn get_manufacturers_c() -> CStringArray {
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();
     let mut stmt = conn_guard.prepare("SELECT DISTINCT name FROM Manufacturers ORDER BY name").unwrap();
@@ -210,9 +202,8 @@ pub extern "C" fn get_manufacturers() -> CStringArray {
     CStringArray::c_repr_of(brand_names).unwrap()
 }
 
-#[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn get_manufacturers_by_generic_name(generic_name: *const c_char) -> CStringArray {
+pub extern "C" fn get_manufacturers_by_generic_name_c(generic_name: *const c_char) -> CStringArray {
     let generic_name_str = unsafe { CStr::from_ptr(generic_name).to_str().unwrap() };
     let conn_arc_mutex = get_drugs_db_connection();
     let conn_guard = conn_arc_mutex.lock().unwrap();

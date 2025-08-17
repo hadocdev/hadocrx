@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use gtk::{prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, GtkWindowExt,  WidgetExt}, CssProvider};
 
-use super::{ widgets, styles, hadocrx };
+use super::{ widgets, styles};
 
 pub struct AppState {
     pub widgets: AppWidgets,
@@ -94,8 +94,8 @@ impl AppState {
     }
 
     fn prepare_widgets(self: &Rc<Self>) {
-        let generic_names = hadocrx::db::get_generic_names();
-        let brand_names = hadocrx::db::get_brand_names();
+        let generic_names = hadocrx::ffi::db::get_generic_names();
+        let brand_names = hadocrx::ffi::db::get_brand_names();
         self.widgets.generic_name_search_box.initialize(generic_names);
         self.widgets.brand_name_search_box.initialize(brand_names);
         self.widgets.strength_dropdown_box.initialize(Vec::new()); 
@@ -113,14 +113,14 @@ impl AppState {
             
             // get generic_name from the db
             // update the generic_name box
-            let generic_name = hadocrx::db::get_generic_name_by_brand_name(brand_name.clone());
+            let generic_name = hadocrx::ffi::db::get_generic_name_by_brand_name(brand_name.clone());
             self_clone.widgets.generic_name_search_box.update_entry_text(&generic_name);
             self_clone.widgets.generic_name_search_box.entry().emit_activate();
 
             // get the manufacturer for this brand_name
             // get all available manufacturers for this generic_name
             // update the manufacturer box
-            let manufacturer = hadocrx::db::get_manufacturer_by_brand_name(brand_name); 
+            let manufacturer = hadocrx::ffi::db::get_manufacturer_by_brand_name(brand_name); 
             
             self_clone.widgets.manufacturer_dropdown_box.update_entry_text(manufacturer.clone()); 
             // enable the manufacturer dropdown
@@ -129,7 +129,7 @@ impl AppState {
             }
             
             // get available strengths for this generic_name
-            let strengths = hadocrx::db::get_strengths_by_generic_name(generic_name);
+            let strengths = hadocrx::ffi::db::get_strengths_by_generic_name(generic_name);
             let count_strengths = strengths.len();
             self_clone.widgets.strength_dropdown_box.update(strengths);
             // enable the strength dropdown
@@ -147,7 +147,7 @@ impl AppState {
         self.widgets.generic_name_search_box.entry().connect_activate(move |entry| {
             if entry.text().is_empty() { return; }
             let generic_name = entry.text().to_string();
-            let manufacturers = hadocrx::db::get_manufacturers_by_generic_name(generic_name.clone());
+            let manufacturers = hadocrx::ffi::db::get_manufacturers_by_generic_name(generic_name.clone());
             self_clone.widgets.manufacturer_dropdown_box.update(manufacturers);
         });
 
@@ -158,14 +158,14 @@ impl AppState {
             let generic_name = self_clone.widgets.generic_name_search_box.entry().text().to_string();
             let manufacturer = self_clone.widgets.manufacturer_dropdown_box.entry.text().to_string();
             // get the correct brand_name for the generic_name, strength and manufacturer 
-            let brand_name = hadocrx::db::get_brand_name_by_generic_name_manufacturer_and_strength(
+            let brand_name = hadocrx::ffi::db::get_brand_name_by_generic_name_manufacturer_and_strength(
                 generic_name.clone(), manufacturer.clone(), strength.clone()
             );
             
             if let Some(name) = brand_name {
                 self_clone.widgets.brand_name_search_box.update_entry_text(&name);
                 // get available formulations for the brand_name and strength
-                let formulations = hadocrx::db::get_formulations_by_brand_name_and_strength(name, strength);
+                let formulations = hadocrx::ffi::db::get_formulations_by_brand_name_and_strength(name, strength);
                 let count_formulations = formulations.len();
                 self_clone.widgets.formulation_dropdown_box.update(formulations);
                 // enable the formulation box
@@ -189,7 +189,7 @@ impl AppState {
             let manufacturer = entry.text().to_string();
             let generic_name = self_clone.widgets.generic_name_search_box.entry().text().to_string();
             // get brand_name for this manufacturer and generic_name
-            let brand_name = hadocrx::db::get_brand_name_by_generic_name_and_manufacturer(generic_name, manufacturer);
+            let brand_name = hadocrx::ffi::db::get_brand_name_by_generic_name_and_manufacturer(generic_name, manufacturer);
             self_clone.widgets.brand_name_search_box.update_entry_text(&brand_name);
         });
 
@@ -216,7 +216,7 @@ impl AppState {
                 self_clone.dialog.set_detail(&message);
                 self_clone.dialog.show(Some(&self_clone.window));
             } else {
-                let medicine_data = hadocrx::prescription::MedicineData::new(brand_name, generic_name, strength, formulation, manufacturer, dosing, instructions, duration);
+                let medicine_data = hadocrx::ffi::prescription::MedicineData::new(brand_name, generic_name, strength, formulation, manufacturer, dosing, instructions, duration);
                 let medicine_row = widgets::medicine_row::MedicineRow::new(medicine_data);
                 self_clone.widgets.medicine_box.append(medicine_row);
                 

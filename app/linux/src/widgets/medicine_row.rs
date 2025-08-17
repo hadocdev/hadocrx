@@ -1,7 +1,4 @@
-// use gtk::prelude::WidgetExt;
-
-use crate::hadocrx::prescription::MedicineData;
-
+use hadocrx::ffi::prescription::MedicineData;
 use super::custom_icon_button;
 
 #[derive(Debug)]
@@ -34,9 +31,6 @@ impl MedicineRow {
         let btn_up = custom_icon_button("fa-arrow-up"); 
         let btn_down = custom_icon_button("fa-arrow-down");
         let btn_delete = custom_icon_button("fa-arrow-delete");
-        // btn_up.add_css_class("flat");
-        // btn_down.add_css_class("flat");
-        // btn_delete.add_css_class("flat");
 
         Self { 
             data,

@@ -10,7 +10,7 @@ fn get_matcher() -> &'static SkimMatcherV2 {
 
 #[allow(dead_code)]
 #[unsafe(no_mangle)]
-pub extern "C" fn fuzzy_match(choice: *const c_char, pattern: *const c_char) -> i64 {
+pub extern "C" fn c_fuzzy_match(choice: *const c_char, pattern: *const c_char) -> i64 {
     let matcher = get_matcher();
     unsafe {
         let score = matcher.fuzzy_match(CStr::from_ptr(choice).to_str().unwrap(), CStr::from_ptr(pattern).to_str().unwrap());

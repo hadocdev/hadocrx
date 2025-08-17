@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use std::{cell::RefCell, ops::Not};
 use gtk::{
     gdk::{Key, ModifierType},
@@ -5,7 +7,6 @@ use gtk::{
     prelude::*,
     subclass::prelude::*,
 };
-use crate::hadocrx;
 
 mod imp {
     use super::*;
@@ -123,7 +124,7 @@ impl AvroPhoneticEntry {
         let buffer = imp.english_buffer.borrow();
         if *imp.is_bangla_mode.borrow() && !buffer.is_empty() {
             let mut entry_text = imp.processed_buffer.borrow().clone();
-            entry_text.push_str(&hadocrx::avro_phonetic::convert(&buffer));
+            entry_text.push_str(&hadocrx::ffi::avro_phonetic::convert(&buffer));
             self.set_text(&entry_text);
             self.set_position(-1);
             return glib::Propagation::Stop;

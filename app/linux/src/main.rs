@@ -5,7 +5,6 @@ use gtk::gio;
 mod widgets;
 mod styles;
 mod models;
-mod hadocrx;
 mod app;
 
 const APP_ID: &str = "org.hadoc.rx";
