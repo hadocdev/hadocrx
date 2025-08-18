@@ -36,61 +36,49 @@ impl AppState {
         );
     }
 
-    fn setup_layout(&self) {
-        let header = gtk::HeaderBar::new();
-        let root = gtk::Box::builder()
-            .orientation(gtk::Orientation::Vertical)
-            .margin_start(0).margin_end(0).margin_top(0).margin_bottom(0)
-            .build();
-        let scrolled_window = gtk::ScrolledWindow::builder().child(&self.widgets.container).build();
-        root.append(&header);
-        root.append(&scrolled_window);
+    fn setup_layout(&self) { 
+        let root = hadocrx_macros::gtk_box! (
+            @orientation gtk::Orientation::Vertical,
+            @margin_start 0, @margin_end 0, @margin_top 0, @margin_bottom 0,
+            gtk::HeaderBar::new(),
+            gtk::ScrolledWindow::builder().child(&self.widgets.container).build()
+        );
         self.window.set_child(Some(&root));
         
-        let label = widgets::label("Brand Name");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 0, 0, 1, 1);
-        self.widgets.grid.attach(&self.widgets.brand_name_search_box, 1, 0, 1, 1);
+        let grid = hadocrx_macros::gtk_grid!(
+            @margin_top 16, @margin_bottom 16, @margin_start 16, @margin_end 16,
+            @column_spacing 16, @row_spacing 8,
+            @halign gtk::Align::Center,
+            @width_request 800, [ 
+                &Self::right_aligned_label("Brand Name"), 
+                &self.widgets.brand_name_search_box,
+                &Self::right_aligned_label("Manufacturer"),
+                &self.widgets.manufacturer_dropdown_box.entry,
+            ], [ 
+                &Self::right_aligned_label("Generic Name"), 
+                &self.widgets.generic_name_search_box,
+                &Self::right_aligned_label("Dosing"),
+                &self.widgets.dosing_box,
+                &self.widgets.btn_add
+            ], [
+                &Self::right_aligned_label("Strength"), 
+                &self.widgets.strength_dropdown_box.entry,
+                &Self::right_aligned_label("Instructions"),
+                &self.widgets.instructions_box
+            ], [
+                &Self::right_aligned_label("Formulation"), 
+                &self.widgets.formulation_dropdown_box.entry,
+                &Self::right_aligned_label("Duration"),
+                &self.widgets.duration_box
+            ]
+        );
         
-        let label = widgets::label("Generic Name");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 0, 1, 1, 1);
-        self.widgets.grid.attach(&self.widgets.generic_name_search_box, 1, 1, 1, 1);
-
-        let label = widgets::label("Strength");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 0, 2, 1, 1);
-        self.widgets.grid.attach(&self.widgets.strength_dropdown_box.entry, 1, 2, 1, 1);
-
-        let label = widgets::label("Formulation");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 0, 3, 1, 1);
-        self.widgets.grid.attach(&self.widgets.formulation_dropdown_box.entry, 1, 3, 1, 1);
- 
-        let label = widgets::label("Manufacturer");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 2, 0, 1, 1);
-        self.widgets.grid.attach(&self.widgets.manufacturer_dropdown_box.entry, 3, 0, 1, 1); 
-
-        let label = widgets::label("Dosing");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 2, 1, 1, 1);
-        self.widgets.grid.attach(&self.widgets.dosing_box, 3, 1, 1, 1);
-
-        let label = widgets::label("Instructions");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 2, 2, 1, 1);
-        self.widgets.grid.attach(&self.widgets.instructions_box, 3, 2, 1, 1);
-
-        let label = widgets::label("Duration");
-        label.set_halign(gtk::Align::End);
-        self.widgets.grid.attach(&label, 2, 3, 1, 1);
-        self.widgets.grid.attach(&self.widgets.duration_box, 3, 3, 1, 1);
-        
-        self.widgets.grid.attach(&self.widgets.btn_add, 4, 1, 1, 1);
-        
-        self.widgets.container.append(&self.widgets.grid);
+        self.widgets.container.append(&grid);
         self.widgets.container.append(&self.widgets.medicine_box.container);    
+    }
+
+    fn right_aligned_label(label: &str) -> gtk::Label {
+        gtk::Label::builder().label(label).halign(gtk::Align::End).build()
     }
 
     fn prepare_widgets(self: &Rc<Self>) {
@@ -246,7 +234,6 @@ impl AppState {
 
 pub struct AppWidgets {
     pub container: gtk::Box,
-    pub grid: gtk::Grid,
     pub brand_name_search_box: widgets::search_box::SearchBox,
     pub generic_name_search_box: widgets::search_box::SearchBox,
     pub strength_dropdown_box: Rc<widgets::dropdown_box::DropdownBox>,
@@ -267,15 +254,7 @@ impl AppWidgets {
             .hexpand(true)
             .vexpand(true)
             .build();
-        container.set_size_request(800, 600);
-        let grid = gtk::Grid::builder()
-            .margin_top(16).margin_bottom(16)
-            .margin_start(16).margin_end(16)
-            .column_spacing(16)
-            .row_spacing(8)
-            .halign(gtk::Align::Center)
-            .build();
-        grid.set_size_request(800, -1);
+        container.set_size_request(800, 600); 
         
         let brand_name_search_box = widgets::search_box::SearchBox::new();
         brand_name_search_box.entry().set_placeholder_text(Some("Brand Name"));
@@ -307,7 +286,7 @@ impl AppWidgets {
         let medicine_box = widgets::medicine_box::MedicineBox::new();
         
         Self { 
-            container, grid, 
+            container,
             brand_name_search_box, generic_name_search_box, 
             manufacturer_dropdown_box,
             strength_dropdown_box, formulation_dropdown_box,

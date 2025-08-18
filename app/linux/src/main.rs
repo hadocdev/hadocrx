@@ -19,5 +19,5 @@ fn main() -> glib::ExitCode {
 #[allow(deprecated)]
 fn build_ui(app: &gtk::Application) {
     let app_state = app::AppState::new(app);
-    app_state.setup_ui();
+    app_state.setup_ui(); 
 }

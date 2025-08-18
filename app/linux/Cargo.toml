@@ -7,6 +7,7 @@ edition = "2024"
 ffi-convert = "0.6.2"
 gtk = { version = "0.10.0", package = "gtk4", features = ["v4_18"] }
 hadocrx = { path = "../../core" }
+hadocrx-macros = { path = "../../macros" }
 
 [build-dependencies]
 glib-build-tools = "0.21.0"
